@@ -37,7 +37,8 @@ data class BackupPayload(
     val merchantRules: List<MerchantRuleEntity>,
     val budgets: List<BudgetEntity>,
     val goals: List<GoalEntity>,
-    val financialProfile: FinancialProfileEntity?
+    val financialProfile: FinancialProfileEntity?,
+    val paydayPlans: List<com.luxwallet.app.core.database.entity.PaydayPlanEntity> = emptyList()
 )
 
 sealed class RestoreResult {
@@ -63,7 +64,8 @@ class BackupRepository(private val context: Context, private val database: LuxDa
             merchantRules = database.merchantRuleDao().getAll(),
             budgets = database.budgetDao().getAllOnce(),
             goals = database.goalDao().getAllOnce(),
-            financialProfile = database.financialProfileDao().get()
+            financialProfile = database.financialProfileDao().get(),
+            paydayPlans = database.paydayPlanDao().getAllOnce()
         )
         val bytes = json.encodeToString(BackupPayload.serializer(), payload).toByteArray(Charsets.UTF_8)
 
@@ -93,6 +95,7 @@ class BackupRepository(private val context: Context, private val database: LuxDa
                 payload.merchantRules.forEach { database.merchantRuleDao().insert(it) }
                 payload.budgets.forEach { database.budgetDao().upsert(it) }
                 payload.goals.forEach { database.goalDao().insert(it) }
+                payload.paydayPlans.forEach { database.paydayPlanDao().upsert(it) }
                 payload.financialProfile?.let { database.financialProfileDao().upsert(it) }
             }
             RestoreResult.Success

@@ -34,10 +34,11 @@ class LuxWalletApp : Application(), Configuration.Provider {
 
     val database: LuxDatabase by lazy {
         Room.databaseBuilder(this, LuxDatabase::class.java, LuxDatabase.DATABASE_NAME)
-            .addMigrations(LuxDatabase.MIGRATION_1_2)
+            .addMigrations(LuxDatabase.MIGRATION_1_2, LuxDatabase.MIGRATION_2_3)
             .build()
     }
 
+    val paydayPlanRepository by lazy { com.luxwallet.app.data.PaydayPlanRepository(database.paydayPlanDao()) }
     val preferences: AppPreferences by lazy { AppPreferences(this) }
     val parserRegistry: ParserRegistry by lazy { ParserRegistry() }
 
@@ -69,7 +70,11 @@ class LuxWalletApp : Application(), Configuration.Provider {
     override fun onCreate() {
         super.onCreate()
         applicationScope.launch {
+            preferences.coachEnabled.collect { com.luxwallet.app.notification.CoachNotifications.configure(this@LuxWalletApp, it) }
+        }
+        applicationScope.launch {
             categoryRepository.seedDefaultsIfEmpty()
+            categoryRepository.resolveOrCreateTopLevel(com.luxwallet.app.engine.PaydayPlan.BILLS_CATEGORY)
             categoryRepository.resolveOrCreateTopLevel(com.luxwallet.app.core.common.TransportPlan.CATEGORY)
             if (!preferences.planV2Ready.first()) {
                 val profile = financialProfileRepository.get()

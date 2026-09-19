@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.3 — 2026-09-19
+
+- Perbaikan navigasi akar menu, panah kembali, alur draft/ringkasan, fokus keyboard, dan bilah adaptif empat menu.
+- Pemisah ribuan otomatis pada input rupiah; onboarding empat langkah menyimpan rekening pada tahap akhir.
+- Rencana saldo sampai tanggal pemasukan, cadangan tagihan/transportasi, dan kalender surplus/minus budget historis.
+- Lumi: maskot penguin hitam–emas, tiga ekspresi, ikon yang dapat dipilih, saran keuangan dan pengingat lokal berizin.
+- Migrasi Room v3 dan snapshot kalender dalam cadangan; PRD dan panduan desain baru.
+- APK bernomor v3; signature dan application ID tetap untuk update di atas v2.
+
+
 ## 1.0.2 — 2026-09-19
 
 - Beranda ringkas, indikator notifikasi berkedip, riwayat transaksi, dan sembunyikan nominal.

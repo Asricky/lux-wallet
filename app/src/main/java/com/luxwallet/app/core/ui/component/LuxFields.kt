@@ -18,9 +18,10 @@ import androidx.compose.ui.unit.dp
 
 @Composable fun ChoiceField(label: String, value: String, options: List<String>, onSelect: (Int) -> Unit, enabled: Boolean = true) {
     var open by remember { mutableStateOf(false) }
+    val focus = androidx.compose.ui.platform.LocalFocusManager.current
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        OutlinedCard(onClick = { open = true }, enabled = enabled, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
+        OutlinedCard(onClick = { focus.clearFocus(); open = true }, enabled = enabled, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
             Row(Modifier.padding(horizontal = 18.dp, vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(value, Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
                 Icon(Icons.Outlined.KeyboardArrowDown, "Pilih $label", tint = MaterialTheme.colorScheme.primary)
@@ -44,7 +45,7 @@ import androidx.compose.ui.unit.dp
 }
 
 @Composable fun MoneyField(label: String, value: String, onChange: (String) -> Unit, modifier: Modifier = Modifier) {
-    OutlinedTextField(value, onChange, modifier.fillMaxWidth(), label = { Text(label) },
-        prefix = { Text("Rp ") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-        singleLine = true, shape = RoundedCornerShape(16.dp))
+    OutlinedTextField(value, { raw -> rupiahDigits(raw)?.let(onChange) }, modifier.fillMaxWidth(), label = { Text(label) },
+        prefix = { Text("Rp ") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        visualTransformation = RupiahTransformation, singleLine = true, shape = RoundedCornerShape(16.dp))
 }

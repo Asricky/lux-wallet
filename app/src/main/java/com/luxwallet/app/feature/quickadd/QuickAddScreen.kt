@@ -29,12 +29,26 @@ import com.luxwallet.app.parser.core.AmountParser
     var increases by rememberSaveable { mutableStateOf(true) }
     var reviewing by rememberSaveable { mutableStateOf(false) }
     var error by rememberSaveable { mutableStateOf<String?>(null) }
+    val scroll = rememberScrollState()
+    LaunchedEffect(reviewing) { scroll.scrollTo(0) }
+    var discard by remember { mutableStateOf(false) }
+    androidx.activity.compose.BackHandler {
+        if (!saving) {
+            if (reviewing) reviewing = false
+            else if (amount.isNotBlank() || merchant.isNotBlank() || note.isNotBlank()) discard = true
+            else onDone()
+        }
+    }
+    if (discard) AlertDialog(onDismissRequest = { discard = false }, title = { Text("Keluar dari catatan?") },
+        text = { Text("Catatan ini belum disimpan.") },
+        confirmButton = { TextButton({ discard = false; onDone() }) { Text("Buang catatan") } },
+        dismissButton = { TextButton({ discard = false }) { Text("Lanjut mengisi") } })
     val kinds = listOf("Pengeluaran", "Pemasukan", "Pindah saldo / top-up sendiri", "Koreksi saldo (+/−)")
     val source = options.accounts.firstOrNull { it.id == accountId }
     val destination = options.accounts.firstOrNull { it.id == destinationId }
     val category = options.categories.firstOrNull { it.id == categoryId }
     val parsed = AmountParser.normalizeOrNull(amount)
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).imePadding().padding(20.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+    Column(Modifier.fillMaxSize().verticalScroll(scroll).imePadding().padding(20.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         Text(if (reviewing) "Periksa catatan" else "Catat transaksi", style = MaterialTheme.typography.headlineMedium)
         Text(if (reviewing) "2 dari 2 · Konfirmasi" else "1 dari 2 · Detail transaksi", color = MaterialTheme.colorScheme.onSurfaceVariant)
         LinearProgressIndicator(progress = { if (reviewing) 1f else 0.5f }, modifier = Modifier.fillMaxWidth())

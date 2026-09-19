@@ -2,11 +2,15 @@
 
 Aplikasi Android untuk memantau keuangan pribadi melalui notifikasi **myBCA, SeaBank, ShopeePay, dan GoPay**. Data diproses di perangkat, dapat digunakan offline, tanpa login rekening atau backend.
 
-Identitas visual memakai dompet hitam dengan aksen emas, tema terang/gelap, ringkasan kekayaan bersih, arus kas, dan ruang belanja harian.
+Kenali **Lumi**, penguin hitam–emas pendamping keuanganmu. Lux Wallet menyediakan tema terang/gelap, kalender pemasukan/pengeluaran, rencana saldo sampai gajian, serta saran dan pengingat lokal.
+
+<img src="docs/brand/lumi-calm.svg" width="120" alt="Lumi, maskot Lux Wallet" />
+
+Spesifikasi produk: [PRD.md](PRD.md) · Panduan tampilan: [DESIGN.md](DESIGN.md).
 
 ## Download APK
 
-[**Download app-debug-v2.apk**](https://github.com/Asricky/lux-wallet/raw/refs/heads/main/app/build/outputs/apk/debug/app-debug-v2.apk)
+[**Download app-debug-v3.apk**](https://github.com/Asricky/lux-wallet/raw/refs/heads/main/app/build/outputs/apk/debug/app-debug-v3.apk)
 
 Semua APK tersedia di [folder APK debug](app/build/outputs/apk/debug). Dari GitHub, buka file APK lalu pilih **Download raw file**.
 
@@ -14,17 +18,17 @@ Lokasi di komputer:
 
 ```text
 lux-wallet\app\build\outputs\apk\debug\
-└── app-debug-v2.apk
+└── app-debug-v3.apk
 ```
 
-Versi terbaru: **v2 (1.0.2)**. [APK v1](app/build/outputs/apk/debug/app-debug-v1.apk) tetap tersedia untuk arsip.
+Versi terbaru: **v3 (1.0.3)**. [APK v1](app/build/outputs/apk/debug/app-debug-v1.apk) dan [v2](app/build/outputs/apk/debug/app-debug-v2.apk) tetap tersedia untuk arsip.
 
 Pilih angka versi terbesar untuk pembaruan terbaru. Nama aplikasi di launcher tetap **Lux Wallet**; nomor versi ada pada nama file APK dan versi paket Android.
 
 ## Instalasi dan mulai memakai
 
 1. Unduh APK, buka di Android 10 atau lebih baru, lalu izinkan instalasi dari aplikasi pengunduh jika diminta.
-2. Buka Lux Wallet, pilih sumber notifikasi, dan isi saldo awal rekening yang digunakan. Format seperti `1500000` atau `1.500.000` diterima.
+2. Ikuti empat langkah perkenalan, sumber notifikasi, saldo rekening, dan target bulanan. Ketik `1500000`; tampilan menjadi `1.500.000` otomatis. Titik yang ditempel harus memakai kelompok ribuan Indonesia.
 3. Izinkan **Akses notifikasi** lewat onboarding atau ikon lonceng kecil di Beranda atau halaman pengaturan notifikasi.
 4. Pastikan notifikasi transaksi dari aplikasi bank/e-wallet juga aktif.
 5. Periksa **ikon lonceng berkedip** di kanan atas Beranda: titik hijau berarti pemantauan tersambung; merah berarti belum aktif atau ada kendala. Ketuk untuk membuka pengaturan notifikasi.
@@ -71,7 +75,7 @@ Untuk membangun ulang versi saat ini tanpa menaikkan nomor:
 Instal lewat ADB (sesuaikan nomor file):
 
 ```powershell
-adb install -r app/build/outputs/apk/debug/app-debug-v2.apk
+adb install -r app/build/outputs/apk/debug/app-debug-v3.apk
 ```
 
 Commit `version.properties` dan APK bernomor baru bersama perubahan sumber. Folder build lain, konfigurasi lokal, dan keystore diabaikan Git.
@@ -84,7 +88,48 @@ Build debug memakai keystore debug lokal Android. Simpan salinan keystore terseb
 
 Build release opsional memakai `keystore.properties` lokal dengan `storeFile`, `storePassword`, `keyAlias`, dan `keyPassword`, lalu jalankan `assembleRelease`. Paket release `com.luxwallet.app` terpisah dari paket debug.
 
-## Perubahan v2
+## Perubahan v3
+
+- Empat menu utama **Beranda, Kalender, Aset, Lainnya**. Ponsel memakai bilah bawah; layar lebar memakai bilah samping.
+- Tombol **+ Catat** membuka formulir sebagai aksi. Panah kembali ada pada halaman lanjutan. Kembali dari ringkasan membawa isian sebelumnya; keluar dari draft meminta pilihan lanjut/buang. Form lama tidak muncul ketika memilih tab lain.
+- Input rupiah bertitik otomatis, termasuk saldo awal, aset, anggaran, transaksi, dan kalkulator investasi. Pemilih melepaskan fokus keyboard sebelum membuka daftar.
+- **Kalender** menampilkan pemasukan, pengeluaran, selisih arus kas, dan surplus/minus terhadap budget yang tersimpan pada hari tersebut.
+- **Rencana sampai gajian** menghitung kebutuhan dari saldo yang dikonfirmasi, dengan jadwal awal tanggal 25 dan 1. Beranda kini memakai rencana ini sebagai sumber ruang belanja.
+- **Saran Lumi** memberikan tindakan berdasarkan rencana, pilihan pengingat harian, dan edukasi investasi. Ikon Lumi bisa tenang/senang/fokus atau mengikuti kondisi rencana.
+- Onboarding disederhanakan menjadi empat langkah. Data rekening disimpan saat selesai, sehingga kembali ke langkah sebelumnya tidak menggandakannya.
+- Database dimigrasikan ke v3 untuk menyimpan riwayat rencana; snapshot kalender ikut cadangan finansial.
+
+### Mulai mengalokasikan uang sampai gajian
+
+1. Buka **Beranda → Rencana** atau **Lainnya → Rencana sampai gajian**.
+2. Isi saldo likuid yang benar-benar tersedia sekarang. Tombol “Gunakan total estimasi rekening” hanya membantu mengambil angka awal; cocokkan dengan saldo asli.
+3. Pilih tanggal pemasukan berikutnya. Tanggal bisa digeser bila gaji terlambat.
+4. Isi tagihan yang belum dibayar, dana penyangga, serta bagian uang yang ingin dilindungi untuk bisnis dan investasi. Uang yang dilindungi harus masih termasuk saldo yang kamu masukkan.
+5. Atur transportasi harian. Default Rp6.000 Senin–Jumat. Cadangan hanya dihitung untuk hari perjalanan sampai sehari sebelum pemasukan.
+6. Isi perkiraan pemasukan tanggal 25 dan 1 jika diketahui. **Perkiraan ini tidak menambah saldo/budget.** Konfirmasi dan simpan rencana.
+7. Saat gaji benar-benar diterima, catat pemasukan dan konfirmasi saldo terbaru untuk periode berikutnya. Jika mengoreksi saldo rekening atau menemukan transaksi lama yang belum tercatat, konfirmasi rencana lagi. Jika dana bisnis/investasi sudah keluar dari saldo likuid, perbarui saldo dan isi hanya alokasi yang masih tersisa.
+
+Nominal sekitar Rp3,2 juta tidak otomatis dijadikan saldo pasti. Aplikasi meminta angka aktual. Target Rp1 juta bisnis dan Rp1,5 juta investasi juga dapat dikurangi/ditunda jika uang belum mencukupi kebutuhan dekat.
+
+Contoh simulasi, **bukan saldo atau rekomendasi belanja pribadi**: saldo Rp3.200.000 pada 19 September 2026 sampai sebelum 25 September, tagihan Rp300.000, penyangga Rp200.000, bisnis Rp1.000.000, investasi Rp1.500.000, dan transportasi 4 hari kerja × Rp6.000 menyisakan Rp176.000 untuk 6 hari, sekitar Rp29.333/hari. Hasil berubah mengikuti tagihan dan saldo yang benar-benar kamu isi.
+
+Rumus: saldo terkonfirmasi − tagihan − penyangga − bisnis − investasi − transportasi = dana bebas. Dana bebas dibagi jumlah hari periode. Setelah rencana dibuat, transaksi nyata mengurangi sisa dana; belanja hari ini dibatasi target harian dan sisa dana bebas. Tagihan terencana dan transportasi menggunakan cadangannya dahulu; kelebihannya masuk pemakaian budget bebas.
+
+### Membaca kalender
+
+Ketuk tanggal untuk melihat transaksi dan rincian. **Selisih arus kas** membandingkan seluruh pemasukan/pengeluaran. **Surplus/minus budget** membandingkan target harian tersimpan dengan pemakaian budget bebas.
+
+Hari tanpa rencana tidak diberi hasil surplus. Hari ini masih sementara; masa depan belum memiliki hasil. Pada hari pertama rencana, pemakaian budget mulai sejak saldo dikonfirmasi, sedangkan arus kas tetap menunjukkan transaksi sehari penuh. Mengubah rencana hari ini tidak mengubah target hari sebelumnya.
+
+### Mengaktifkan pengingat dan ikon Lumi
+
+Buka **Lainnya → Saran Lumi**, atau **Pengaturan → Lumi & pengingat**. Aktifkan Pengingat harian dan izinkan notifikasi Android jika diminta. Izin ini berbeda dari akses membaca notifikasi bank.
+
+Pengingat otomatis maksimal sekali sehari, antara 09.00–20.59 waktu perangkat. Android dapat menunda pengiriman karena penghematan baterai. Ketuk pengingat untuk membuka saran; gunakan “Kirim contoh notifikasi” untuk memeriksa izin. Tidak ada nominal saldo dalam notifikasi, dan layar kunci memakai pesan umum.
+
+Pilihan ikon: Lumi tenang, senang, fokus, atau mengikuti kondisi rencana saat aplikasi dibuka. Launcher bisa membutuhkan waktu untuk menyegarkan ikon. Lumi adalah maskot dan pendamping berbasis aturan lokal; percakapan interaktif belum tersedia.
+
+## Riwayat perubahan v2
 
 - Beranda yang ringkas: indikator notifikasi kecil, kartu kekayaan, pintasan, ruang belanja, riwayat transaksi, dan sebaran aset.
 - Tombol mata menyembunyikan nominal serta proporsi sebaran aset; pilihan tersimpan dan digunakan juga pada menu Aset.
@@ -110,7 +155,7 @@ Dua pembayaran sungguhan yang ringkasannya persis sama dalam waktu singkat dapat
 
 ### Transportasi dan target Rp2,5 juta
 
-Rencana awal: **Rp6.000 per hari kerja (Senin–Jumat)**, **Rp1 juta tabungan modal bisnis**, dan **Rp1,5 juta investasi per bulan**. Semua bisa diubah melalui **Beranda → Anggaran**. Target ini dicadangkan dalam perhitungan, tidak otomatis memindahkan uang.
+Rencana awal: **Rp6.000 per hari kerja (Senin–Jumat)**, **Rp1 juta tabungan modal bisnis**, dan **Rp1,5 juta investasi per bulan**. Target bulanan dapat diubah melalui **Lainnya → Anggaran & target**. Alokasi uang saat ini diatur melalui **Beranda → Rencana**. Target ini dicadangkan dalam perhitungan, tidak otomatis memindahkan uang.
 
 1. Buat rekening/e-wallet milikmu.
 2. Saat top-up berkala, catat sebagai **Pindah saldo / top-up sendiri**, berapa pun nominal dan waktunya.
@@ -118,7 +163,7 @@ Rencana awal: **Rp6.000 per hari kerja (Senin–Jumat)**, **Rp1 juta tabungan mo
 4. Cadangan transportasi = Rp6.000 × jumlah hari perjalanan bulan tersebut. Jika realisasi lebih besar, cadangan mengikuti realisasi agar anggaran tidak terlalu optimistis.
 5. Biaya kategori Transportasi rutin tetap terlihat di arus kas, tetapi dikeluarkan dari pemakaian uang belanja bebas. Nominal Rp6.000 tidak otomatis dianggap transportasi.
 
-Ruang belanja dihitung dari pendapatan dikurangi kewajiban/cadangan lain, target tabungan, investasi, transportasi, dan belanja bebas sebelum hari ini; sisanya dibagi sisa hari termasuk hari ini. Belanja hari ini dikurangi satu kali dari alokasi tersebut.
+Pada v2 ruang belanja memakai profil pendapatan bulanan. Sejak v3, Beranda memakai **Rencana sampai gajian** dari saldo yang dikonfirmasi; profil bulanan tetap tersedia untuk perencanaan jangka panjang.
 
 Jangan masukkan cadangan transportasi kembali ke kolom kewajiban tetap. Top-up otomatis dengan tujuan yang belum pasti tetap perlu ditinjau; jadwal isi ulang tidak dianggap sebagai jadwal belanja.
 
@@ -126,7 +171,7 @@ Jangan masukkan cadangan transportasi kembali ke kolom kewajiban tetap. Top-up o
 
 Lihat [panduan investasi dan pemisahan dana bisnis](docs/investasi.md). Tidak ada satu produk yang pasti paling baik. Saran awal bergantung pada kecukupan dana darurat, kapan uang diperlukan, dan toleransi penurunan nilai. Angka hasil di kalkulator adalah asumsi simulasi, bukan penawaran atau janji keuntungan.
 
-## Perubahan v1
+## Riwayat perubahan v1
 
 - Logo dompet hitam/emas, palet terang/gelap, dashboard baru, dan label utama berbahasa Indonesia.
 - Perbaikan dropdown rekening, kategori, filter arus kas, dan tema.
@@ -145,12 +190,12 @@ Lihat [panduan investasi dan pemisahan dana bisnis](docs/investasi.md). Tidak ad
 .\gradlew.bat testDebugUnitTest lintDebug
 ```
 
-Suite mencakup sembilan contoh notifikasi, pembayaran myBCA Rp3, calon duplikat dan konfirmasinya, migrasi Room v1→v2, koreksi saldo, anggaran transportasi/tabungan, kalkulator, rollback ledger, serta interaksi pemilih pada tema terang dan gelap.
+Suite mencakup parser dan ledger, duplikasi Rp3, migrasi Room dari v1/v2 ke v3, navigasi dan tombol kembali, alur catat transaksi sebenarnya, format rupiah/cursor, rencana gajian, cadangan transportasi/tagihan, kalender historis, izin/privasi notifikasi, ikon launcher, serta render tema terang/gelap.
 
-Belum diverifikasi pada HP fisik dalam revisi ini. Format notifikasi dapat berubah antar versi aplikasi bank. GoPay tetap ditandai untuk ditinjau karena belum tersedia sampel notifikasi asli yang terkalibrasi. Penggabungan/pemisahan transaksi secara manual belum tersedia.
+Validasi v3: 103 pengujian lolos, Android Lint tanpa error, dan render Beranda/Kalender diperiksa pada tema terang serta gelap. Belum diverifikasi pada HP fisik dalam revisi ini. Format notifikasi dapat berubah antar versi aplikasi bank. GoPay tetap ditandai untuk ditinjau karena belum tersedia sampel notifikasi asli yang terkalibrasi. Penggabungan/pemisahan transaksi secara manual belum tersedia.
 
 ## Privasi dan cadangan
 
-Pemrosesan inti berjalan lokal. Tidak ada pengiriman isi notifikasi ke server. Database Room berada di penyimpanan privat aplikasi; cadangan file dienkripsi menggunakan Android Keystore. Cadangan tersebut terikat kunci instalasi/perangkat, sehingga **bukan** cadangan portabel untuk reinstall atau pindah perangkat. Ekspor CSV tersedia untuk arsip transaksi.
+Pemrosesan inti berjalan lokal. Tidak ada pengiriman isi notifikasi ke server. Database Room termasuk riwayat rencana kalender berada di penyimpanan privat aplikasi; cadangan file dienkripsi menggunakan Android Keystore. Cadangan tersebut terikat kunci instalasi/perangkat, sehingga **bukan** cadangan portabel untuk reinstall atau pindah perangkat. Ekspor CSV tersedia untuk arsip transaksi.
 
 Notifikasi yang tidak dikenal dipertahankan untuk ditinjau. Retensi mengosongkan isi mentah notifikasi yang sudah diproses; hash dan metadata identitas tetap disimpan untuk mencegah kiriman ulang dihitung kembali. Proteksi tangkapan layar dan kunci biometrik dapat diaktifkan dari Pengaturan.

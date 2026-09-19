@@ -24,18 +24,21 @@ import com.luxwallet.app.feature.transactions.TransactionsScreen
 @Composable
 fun LuxNavGraph(navController: NavHostController, startDestination: String = LuxDestinations.HOME) {
     NavHost(navController = navController, startDestination = startDestination) {
-        composable(LuxDestinations.HOME) { HomeScreen(onNavigate = { navController.navigate(it) }) }
+        composable(LuxDestinations.HOME) { HomeScreen(onNavigate = { navController.openScreen(it) }) }
+        composable(LuxDestinations.CALENDAR) { com.luxwallet.app.feature.calendar.CalendarScreen(onNavigate = { navController.openScreen(it) }) }
+        composable(LuxDestinations.PLANNER) { com.luxwallet.app.feature.planner.PlannerScreen() }
+        composable(LuxDestinations.COACH) { com.luxwallet.app.feature.coach.CoachScreen(onNavigate = { navController.openScreen(it) }) }
         composable(LuxDestinations.CASHFLOW) { CashflowScreen() }
-        composable(LuxDestinations.ASSETS) { AssetsScreen(onAccounts = { navController.navigate(LuxDestinations.ACCOUNTS) }) }
-        composable(LuxDestinations.MORE) { MoreScreen(onNavigate = { navController.navigate(it) }) }
-        composable(LuxDestinations.QUICK_ADD) { QuickAddScreen(onDone = { navController.popBackStack() }, onAccounts = { navController.navigate(LuxDestinations.ACCOUNTS) }) }
+        composable(LuxDestinations.ASSETS) { AssetsScreen(onAccounts = { navController.openScreen(LuxDestinations.ACCOUNTS) }) }
+        composable(LuxDestinations.MORE) { MoreScreen(onNavigate = { navController.openScreen(it) }) }
+        composable(LuxDestinations.QUICK_ADD) { QuickAddScreen(onDone = { navController.popBackStack() }, onAccounts = { navController.openScreen(LuxDestinations.ACCOUNTS) }) }
         composable(LuxDestinations.CALCULATOR) { com.luxwallet.app.feature.calculator.CalculatorScreen() }
         composable(LuxDestinations.NOTIFICATION_SETTINGS) {
-            com.luxwallet.app.feature.settings.NotificationSettingsScreen(onDiagnostics = { navController.navigate(LuxDestinations.NOTIFICATION_LAB) })
+            com.luxwallet.app.feature.settings.NotificationSettingsScreen(onDiagnostics = { navController.openScreen(LuxDestinations.NOTIFICATION_LAB) })
         }
 
         composable(LuxDestinations.TRANSACTIONS) {
-            TransactionsScreen(onTransactionClick = { id -> navController.navigate(LuxDestinations.transactionDetail(id)) })
+            TransactionsScreen(onTransactionClick = { id -> navController.openScreen(LuxDestinations.transactionDetail(id)) })
         }
         composable(
             LuxDestinations.TRANSACTION_DETAIL,
@@ -46,7 +49,7 @@ fun LuxNavGraph(navController: NavHostController, startDestination: String = Lux
         }
 
         composable(LuxDestinations.NEEDS_REVIEW) {
-            NeedsReviewScreen(onTransactionClick = { id -> navController.navigate(LuxDestinations.transactionDetail(id)) })
+            NeedsReviewScreen(onTransactionClick = { id -> navController.openScreen(LuxDestinations.transactionDetail(id)) })
         }
         composable(LuxDestinations.BUDGETS_GOALS) { BudgetGoalsScreen() }
         composable(LuxDestinations.INSIGHTS) { InsightsScreen() }
@@ -56,10 +59,11 @@ fun LuxNavGraph(navController: NavHostController, startDestination: String = Lux
         composable(LuxDestinations.NOTIFICATION_LAB) { NotificationLabScreen() }
         composable(LuxDestinations.SETTINGS) {
             SettingsScreen(
-                onOpenAccounts = { navController.navigate(LuxDestinations.ACCOUNTS) },
-                onOpenCategories = { navController.navigate(LuxDestinations.CATEGORIES) },
-                onOpenRules = { navController.navigate(LuxDestinations.RULES) },
-                onOpenNotificationLab = { navController.navigate(LuxDestinations.NOTIFICATION_LAB) }
+                onOpenCoach = { navController.openScreen(LuxDestinations.COACH) },
+                onOpenAccounts = { navController.openScreen(LuxDestinations.ACCOUNTS) },
+                onOpenCategories = { navController.openScreen(LuxDestinations.CATEGORIES) },
+                onOpenRules = { navController.openScreen(LuxDestinations.RULES) },
+                onOpenNotificationLab = { navController.openScreen(LuxDestinations.NOTIFICATION_LAB) }
             )
         }
     }

@@ -2,95 +2,45 @@ package com.luxwallet.app.feature.onboarding
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.room.withTransaction
 import com.luxwallet.app.LuxWalletApp
-import com.luxwallet.app.core.common.AppPreferences
-import com.luxwallet.app.core.database.entity.AssetEntity
 import com.luxwallet.app.core.database.entity.FinancialProfileEntity
-import com.luxwallet.app.core.database.entity.GoalEntity
-import com.luxwallet.app.core.database.entity.LiabilityEntity
-import com.luxwallet.app.core.model.AccountKind
-import com.luxwallet.app.core.model.AccountProvider
-import com.luxwallet.app.core.model.AssetClass
-import com.luxwallet.app.core.model.LiabilityType
-import com.luxwallet.app.core.model.RiskProfile
-import com.luxwallet.app.core.model.SourceApp
-import com.luxwallet.app.data.AccountRepository
-import com.luxwallet.app.data.AssetRepository
-import com.luxwallet.app.data.FinancialProfileRepository
-import com.luxwallet.app.data.GoalRepository
-import com.luxwallet.app.data.LiabilityRepository
+import com.luxwallet.app.core.model.*
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
-class OnboardingViewModel(
-    private val preferences: AppPreferences,
-    private val accountRepository: AccountRepository,
-    private val assetRepository: AssetRepository,
-    private val liabilityRepository: LiabilityRepository,
-    private val financialProfileRepository: FinancialProfileRepository,
-    private val goalRepository: GoalRepository
-) : ViewModel() {
-
-    fun setSourceEnabled(source: SourceApp, enabled: Boolean) {
-        viewModelScope.launch { preferences.setSourceEnabled(source, enabled) }
-    }
-
-    fun createAccountIfNamed(name: String, provider: AccountProvider, kind: AccountKind, openingBalance: Long) {
-        if (name.isBlank()) return
+class OnboardingViewModel(private val app: LuxWalletApp) : ViewModel() {
+    val saving = MutableStateFlow(false)
+    val error = MutableStateFlow<String?>(null)
+    fun finish(balances: Map<AccountProvider, Long>, sources: Set<SourceApp>, income: Long, obligations: Long, savings: Long, investment: Long) {
+        if (saving.value) return
+        saving.value = true
         viewModelScope.launch {
-            accountRepository.createAccount(name, kind, provider, openingBalance, System.currentTimeMillis())
+            try {
+                app.database.withTransaction {
+                    val existing = app.database.accountDao().getAllAccountsOnce()
+                    balances.forEach { (provider, balance) ->
+                        if (existing.none { it.provider == provider && it.isOwnedByUser }) {
+                            val kind = when (provider) {
+                                AccountProvider.BCA, AccountProvider.SEABANK -> AccountKind.BANK
+                                AccountProvider.GOPAY, AccountProvider.SHOPEEPAY -> AccountKind.EWALLET
+                                else -> AccountKind.MANUAL
+                            }
+                            val name = when (provider) { AccountProvider.CASH -> "Tunai"; AccountProvider.SEABANK -> "SeaBank"; AccountProvider.GOPAY -> "GoPay"; AccountProvider.SHOPEEPAY -> "ShopeePay"; else -> provider.name }
+                            app.accountRepository.createAccount(name, kind, provider, balance, System.currentTimeMillis())
+                        }
+                    }
+                    app.financialProfileRepository.save(FinancialProfileEntity(baselineDate = System.currentTimeMillis(),
+                        expectedMonthlyIncome = income, fixedObligations = obligations, savingsTargetMonthly = savings,
+                        investmentTargetMonthly = investment, onboardingCompleted = true))
+                }
+                SourceApp.entries.forEach { app.preferences.setSourceEnabled(it, it in sources) }
+                app.preferences.setOnboardingComplete(true)
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                error.value = "Pengaturan belum selesai disimpan. Coba lagi."
+            } finally { saving.value = false }
         }
     }
-
-    fun addAssetIfNamed(name: String, assetClass: AssetClass, value: Long) {
-        if (name.isBlank() || value <= 0) return
-        viewModelScope.launch {
-            assetRepository.upsert(AssetEntity(name = name, assetClass = assetClass, currentValue = value, updatedAt = System.currentTimeMillis()))
-        }
-    }
-
-    fun addLiabilityIfNamed(name: String, type: LiabilityType, outstanding: Long) {
-        if (name.isBlank() || outstanding <= 0) return
-        viewModelScope.launch {
-            liabilityRepository.upsert(LiabilityEntity(name = name, type = type, currentOutstanding = outstanding, updatedAt = System.currentTimeMillis()))
-        }
-    }
-
-    fun addGoalIfNamed(name: String, targetAmount: Long) {
-        if (name.isBlank() || targetAmount <= 0) return
-        viewModelScope.launch {
-            goalRepository.upsert(GoalEntity(name = name, targetAmount = targetAmount, createdAt = System.currentTimeMillis()))
-        }
-    }
-
-    fun finish(
-        expectedMonthlyIncome: Long,
-        fixedObligations: Long,
-        savingsTarget: Long,
-        investmentTarget: Long,
-        safetyBuffer: Long,
-        riskProfile: RiskProfile
-    ) {
-        viewModelScope.launch {
-            financialProfileRepository.save(
-                FinancialProfileEntity(
-                    baselineDate = System.currentTimeMillis(),
-                    expectedMonthlyIncome = expectedMonthlyIncome,
-                    fixedObligations = fixedObligations,
-                    savingsTargetMonthly = savingsTarget,
-                    investmentTargetMonthly = investmentTarget,
-                    safetyBufferMonthly = safetyBuffer,
-                    riskProfile = riskProfile,
-                    onboardingCompleted = true
-                )
-            )
-            preferences.setOnboardingComplete(true)
-        }
-    }
-
-    companion object {
-        fun create(app: LuxWalletApp) = OnboardingViewModel(
-            app.preferences, app.accountRepository, app.assetRepository,
-            app.liabilityRepository, app.financialProfileRepository, app.goalRepository
-        )
-    }
+    companion object { fun create(app: LuxWalletApp) = OnboardingViewModel(app) }
 }

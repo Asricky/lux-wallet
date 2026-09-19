@@ -40,6 +40,7 @@ import java.io.File
 
 @Composable
 fun SettingsScreen(
+    onOpenCoach: () -> Unit = {},
     onOpenAccounts: () -> Unit = {},
     onOpenCategories: () -> Unit = {},
     onOpenRules: () -> Unit = {},
@@ -93,7 +94,7 @@ fun SettingsScreen(
     }
 
     LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        item { Text("Pengaturan", style = MaterialTheme.typography.headlineMedium) }
+        item { SettingsSection("Lumi & pengingat") { SettingsLinkRow("Saran, notifikasi & ikon aplikasi", onOpenCoach) } }
         item { com.luxwallet.app.core.ui.component.NotificationStatusCard() }
         item {
             SettingsSection("Rekening") {

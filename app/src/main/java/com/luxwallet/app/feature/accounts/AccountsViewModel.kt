@@ -17,12 +17,24 @@ class AccountsViewModel(private val accountRepository: AccountRepository) : View
     val accounts: StateFlow<List<AccountEntity>> = accountRepository.observeAllAccounts()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    fun createAccount(name: String, kind: AccountKind, provider: AccountProvider, openingBalance: Long) {
+    val saving = kotlinx.coroutines.flow.MutableStateFlow(false)
+    val error = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
+    fun createAccount(name: String, kind: AccountKind, provider: AccountProvider, openingBalance: Long, onSaved: () -> Unit = {}) {
+        if (saving.value) return
+        if (name.isBlank() || openingBalance < 0) { error.value = "Isi nama dan saldo nol atau positif."; return }
+        saving.value = true
+        error.value = null
         viewModelScope.launch {
+          try {
             accountRepository.createAccount(
                 name = name, kind = kind, provider = provider,
                 openingBalance = openingBalance, openingBalanceDate = System.currentTimeMillis()
             )
+            onSaved()
+          } catch (e: Exception) {
+              if (e is kotlinx.coroutines.CancellationException) throw e
+              error.value = "Rekening belum tersimpan. Coba lagi."
+          } finally { saving.value = false }
         }
     }
 

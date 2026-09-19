@@ -43,13 +43,15 @@ import com.luxwallet.app.core.database.entity.TransactionEntity
         MerchantRuleEntity::class,
         BudgetEntity::class,
         GoalEntity::class,
-        FinancialProfileEntity::class
+        FinancialProfileEntity::class,
+        com.luxwallet.app.core.database.entity.PaydayPlanEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
 abstract class LuxDatabase : RoomDatabase() {
+    abstract fun paydayPlanDao(): com.luxwallet.app.core.database.dao.PaydayPlanDao
     abstract fun accountDao(): AccountDao
     abstract fun assetDao(): AssetDao
     abstract fun liabilityDao(): LiabilityDao
@@ -67,6 +69,11 @@ abstract class LuxDatabase : RoomDatabase() {
             override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE notification_observations ADD COLUMN eventTime INTEGER")
                 db.execSQL("ALTER TABLE notification_observations ADD COLUMN contentHash TEXT")
+            }
+        }
+        val MIGRATION_2_3 = object : androidx.room.migration.Migration(2, 3) {
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS payday_plans (startDay INTEGER NOT NULL, capturedAt INTEGER NOT NULL, payload TEXT NOT NULL, PRIMARY KEY(startDay))")
             }
         }
         const val DATABASE_NAME = "lux_wallet.db"

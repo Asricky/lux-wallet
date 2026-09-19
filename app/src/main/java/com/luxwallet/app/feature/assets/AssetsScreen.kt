@@ -39,12 +39,12 @@ import kotlinx.coroutines.launch
     var assetClass by rememberSaveable { mutableStateOf(AssetClass.OTHER) }
     val account = edit?.takeIf { it.startsWith("account:") }?.substringAfter(':')?.toLongOrNull()?.let { id -> state.liquidAccounts.find { it.id == id } }
     val asset = edit?.takeIf { it.startsWith("asset:") }?.substringAfter(':')?.toLongOrNull()?.let { id -> (state.investments + state.otherAssets).find { it.id == id } }
-    val liability = edit?.takeIf { it.startsWith("debt:") }?.substringAfter(':')?.toLongOrNull()?.let { id -> state.liabilities.find { it.id == id } }
+    val liability = if (edit == "newDebt") com.luxwallet.app.core.database.entity.LiabilityEntity(name = "", type = com.luxwallet.app.core.model.LiabilityType.OTHER_DEBT, currentOutstanding = 0, updatedAt = System.currentTimeMillis()) else edit?.takeIf { it.startsWith("debt:") }?.substringAfter(':')?.toLongOrNull()?.let { id -> state.liabilities.find { it.id == id } }
     fun money(value: Long) = if (hidden) "Rp ••••••" else AmountFormat.rupiah(value)
     fun open(key: String, title: String, value: Long, type: AssetClass = AssetClass.OTHER) {
         edit = key; name = title; amount = value.toString(); assetClass = type; vm.error.value = null
     }
-    LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+    LazyColumn(contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 96.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         item { Text("Aset saya", style = MaterialTheme.typography.headlineMedium) }
         item {
             Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -76,15 +76,18 @@ import kotlinx.coroutines.launch
                 }
                 item { OutlinedButton({ open("new", "", 0, if (tab == 1) AssetClass.REKSA_DANA else AssetClass.OTHER) }, Modifier.fillMaxWidth()) { Text("Tambah aset manual") } }
             }
-            3 -> items(state.liabilities, key = { it.id }) { item ->
-                AssetRow(item.name, "Sisa kewajiban · ubah manual", money(item.currentOutstanding)) { open("debt:${item.id}", item.name, item.currentOutstanding) }
+            3 -> {
+                items(state.liabilities, key = { it.id }) { item ->
+                    AssetRow(item.name, "Sisa kewajiban · ubah manual", money(item.currentOutstanding)) { open("debt:${item.id}", item.name, item.currentOutstanding) }
+                }
+                item { OutlinedButton({ open("newDebt", "", 0) }, Modifier.fillMaxWidth()) { Text("Tambah utang") } }
             }
         }
         item { Text("Ketuk aset untuk mengubah nominal. Perubahan saldo rekening dicatat sebagai penyesuaian, sehingga tidak menjadi pemasukan atau pengeluaran.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
     }
     if (edit != null) ModalBottomSheet(onDismissRequest = { if (!saving) edit = null }) {
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).imePadding().padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Text(if (edit == "new") "Tambah aset" else "Ubah nominal", style = MaterialTheme.typography.titleLarge)
+            Text(if (edit == "new") "Tambah aset" else if (edit == "newDebt") "Tambah utang" else "Ubah nominal", style = MaterialTheme.typography.titleLarge)
             if (account != null) Text(account.name, style = MaterialTheme.typography.titleMedium)
             else OutlinedTextField(name, { name = it }, Modifier.fillMaxWidth(), label = { Text("Nama") }, singleLine = true)
             if (account == null && liability == null) {

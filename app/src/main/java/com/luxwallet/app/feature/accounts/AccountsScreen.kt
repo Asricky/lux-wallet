@@ -38,11 +38,13 @@ import com.luxwallet.app.core.ui.luxViewModel
 @Composable
 fun AccountsScreen() {
     val viewModel = luxViewModel { AccountsViewModel.create(it) }
+    val saving by viewModel.saving.collectAsState()
+    val error by viewModel.error.collectAsState()
     val accounts by viewModel.accounts.collectAsState()
 
-    var name by remember { mutableStateOf("") }
-    var provider by remember { mutableStateOf(AccountProvider.BCA) }
-    var openingBalance by remember { mutableStateOf("") }
+    var name by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf("") }
+    var provider by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(AccountProvider.BCA) }
+    var openingBalance by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf("") }
 
     LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         items(accounts) { account ->
@@ -55,7 +57,7 @@ fun AccountsScreen() {
                     Text("${account.kind.name} • ${account.provider.name}", style = MaterialTheme.typography.bodyMedium)
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Switch(checked = account.includeInNetWorth, onCheckedChange = { viewModel.setIncludeInNetWorth(account, it) })
-                        Text("Include in net worth", style = MaterialTheme.typography.bodyMedium)
+                        Text("Hitung dalam kekayaan bersih", style = MaterialTheme.typography.bodyMedium)
                     }
                 }
             }
@@ -64,27 +66,30 @@ fun AccountsScreen() {
         item {
             Card(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Add account", style = MaterialTheme.typography.titleMedium)
-                    OutlinedTextField(name, { name = it }, label = { Text("Name (e.g. BCA)") }, modifier = Modifier.fillMaxWidth())
+                    Text("Tambah rekening", style = MaterialTheme.typography.titleMedium)
+                    OutlinedTextField(name, { name = it }, label = { Text("Nama rekening") }, modifier = Modifier.fillMaxWidth())
 
                     com.luxwallet.app.core.ui.component.ChoiceField("Penyedia", provider.name,
                         AccountProvider.entries.map { it.name }, { provider = AccountProvider.entries[it] })
 
-                    OutlinedTextField(openingBalance, { openingBalance = it }, label = { Text("Opening balance") }, modifier = Modifier.fillMaxWidth())
+                    com.luxwallet.app.core.ui.component.MoneyField("Saldo saat ini", openingBalance, { openingBalance = it })
 
-                    Button(onClick = {
-                        val balance = com.luxwallet.app.parser.core.AmountParser.normalizeOrNull(openingBalance) ?: return@Button
+                    error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                    Button(enabled = !saving, onClick = {
+                        val balance = com.luxwallet.app.parser.core.AmountParser.normalizeOrNull(openingBalance)
+                        if (balance == null || balance < 0 || name.isBlank()) { viewModel.error.value = "Isi nama dan saldo yang valid."; return@Button }
                         if (name.isNotBlank()) {
                             val kind = when (provider) {
                                 AccountProvider.BCA, AccountProvider.SEABANK -> AccountKind.BANK
                                 AccountProvider.GOPAY, AccountProvider.SHOPEEPAY -> AccountKind.EWALLET
                                 AccountProvider.CASH, AccountProvider.OTHER -> AccountKind.MANUAL
                             }
-                            viewModel.createAccount(name, kind, provider, balance)
-                            name = ""
-                            openingBalance = ""
+                            viewModel.createAccount(name, kind, provider, balance) {
+                                name = ""
+                                openingBalance = ""
+                            }
                         }
-                    }) { Text("Add Account") }
+                    }) { Text(if (saving) "Menyimpan…" else "Simpan rekening") }
                 }
             }
         }

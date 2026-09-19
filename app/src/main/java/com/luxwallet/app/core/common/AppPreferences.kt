@@ -23,6 +23,9 @@ private val Context.dataStore by preferencesDataStore(name = "lux_wallet_setting
 class AppPreferences(private val context: Context) {
 
     private object Keys {
+        val COACH_ENABLED = booleanPreferencesKey("coach_enabled")
+        val COACH_LAST_DATE = stringPreferencesKey("coach_last_date")
+        val LUMI_ICON = stringPreferencesKey("lumi_icon")
         val ONBOARDING_COMPLETE = booleanPreferencesKey("onboarding_complete")
         val AMOUNTS_HIDDEN = booleanPreferencesKey("amounts_hidden")
         val TRANSPORT_DAILY = intPreferencesKey("transport_daily")
@@ -39,6 +42,13 @@ class AppPreferences(private val context: Context) {
         val PACKAGE_DISCOVERY_ENABLED = booleanPreferencesKey("package_discovery_enabled")
         val DISCOVERED_PACKAGES = stringSetPreferencesKey("discovered_packages")
     }
+
+    val coachEnabled = context.dataStore.data.map { it[Keys.COACH_ENABLED] ?: false }
+    val coachLastDate = context.dataStore.data.map { it[Keys.COACH_LAST_DATE] }
+    val lumiIcon = context.dataStore.data.map { it[Keys.LUMI_ICON] ?: "CALM" }
+    suspend fun setCoachEnabled(enabled: Boolean) { context.dataStore.edit { it[Keys.COACH_ENABLED] = enabled } }
+    suspend fun setCoachLastDate(date: String) { context.dataStore.edit { it[Keys.COACH_LAST_DATE] = date } }
+    suspend fun setLumiIcon(value: String) { context.dataStore.edit { it[Keys.LUMI_ICON] = value } }
 
     val onboardingComplete: Flow<Boolean> =
         context.dataStore.data.map { it[Keys.ONBOARDING_COMPLETE] ?: false }

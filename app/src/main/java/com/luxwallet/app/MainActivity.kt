@@ -38,6 +38,12 @@ import com.luxwallet.app.navigation.LuxNavGraph
 import kotlinx.coroutines.flow.collectLatest
 
 class MainActivity : FragmentActivity() {
+    var openCoach by mutableStateOf(false)
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        openCoach = intent.getBooleanExtra("open_coach", false)
+    }
     override fun onResume() {
         super.onResume()
         com.luxwallet.app.notification.NotificationAccess.requestRebind(this)
@@ -49,6 +55,7 @@ class MainActivity : FragmentActivity() {
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        openCoach = intent.getBooleanExtra("open_coach", false)
         enableEdgeToEdge()
 
         val app = application as LuxWalletApp
@@ -82,6 +89,7 @@ class MainActivity : FragmentActivity() {
 private fun LuxWalletRoot(activity: FragmentActivity) {
     val app = activity.application as LuxWalletApp
     val onboardingComplete by app.preferences.onboardingComplete.collectAsState(initial = null)
+    val navController = rememberNavController()
     val biometricLockEnabled by app.preferences.biometricLockEnabled.collectAsState(initial = null)
 
     when (onboardingComplete) {
@@ -110,7 +118,14 @@ private fun LuxWalletRoot(activity: FragmentActivity) {
             }
 
             if (unlocked) {
-                LuxWalletScaffold()
+                com.luxwallet.app.navigation.LuxAppScaffold(navController)
+                LaunchedEffect((activity as? MainActivity)?.openCoach) {
+                    if ((activity as? MainActivity)?.openCoach == true) {
+                        navController.navigate(LuxDestinations.COACH) { launchSingleTop = true }
+                        activity.openCoach = false
+                        activity.intent.removeExtra("open_coach")
+                    }
+                }
             } else {
                 LockedScreen(onRetry = { retryToken++ })
             }
@@ -127,47 +142,5 @@ private fun LockedScreen(onRetry: () -> Unit) {
     ) {
         Text("Lux Wallet terkunci")
         androidx.compose.material3.TextButton(onClick = onRetry) { Text("Buka kunci") }
-    }
-}
-
-private data class BottomNavItem(val route: String, val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector)
-
-private val BOTTOM_NAV_ITEMS = listOf(
-    BottomNavItem(LuxDestinations.HOME, "Beranda", Icons.Filled.Home),
-    BottomNavItem(LuxDestinations.CASHFLOW, "Arus kas", Icons.Filled.PieChart),
-    BottomNavItem(LuxDestinations.QUICK_ADD, "Catat", Icons.Filled.Add),
-    BottomNavItem(LuxDestinations.ASSETS, "Aset", Icons.Filled.AccountBalanceWallet),
-    BottomNavItem(LuxDestinations.MORE, "Lainnya", Icons.Filled.MoreHoriz)
-)
-
-@Composable
-private fun LuxWalletScaffold() {
-    val navController = rememberNavController()
-    val backStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = backStackEntry?.destination?.route
-
-    Scaffold(
-        bottomBar = {
-            NavigationBar {
-                BOTTOM_NAV_ITEMS.forEach { item ->
-                    NavigationBarItem(
-                        selected = currentRoute == item.route,
-                        onClick = {
-                            navController.navigate(item.route) {
-                                popUpTo(LuxDestinations.HOME) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        icon = { Icon(item.icon, contentDescription = item.label) },
-                        label = { Text(item.label) }
-                    )
-                }
-            }
-        }
-    ) { padding ->
-        androidx.compose.foundation.layout.Box(Modifier.padding(padding)) {
-            LuxNavGraph(navController = navController)
-        }
     }
 }
