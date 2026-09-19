@@ -1,0 +1,106 @@
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+
+package com.luxwallet.app.feature.accounts
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import com.luxwallet.app.core.common.AmountFormat
+import com.luxwallet.app.core.model.AccountKind
+import com.luxwallet.app.core.model.AccountProvider
+import com.luxwallet.app.core.ui.luxViewModel
+
+@Composable
+fun AccountsScreen() {
+    val viewModel = luxViewModel { AccountsViewModel.create(it) }
+    val accounts by viewModel.accounts.collectAsState()
+
+    var name by remember { mutableStateOf("") }
+    var provider by remember { mutableStateOf(AccountProvider.BCA) }
+    var openingBalance by remember { mutableStateOf("") }
+    var providerExpanded by remember { mutableStateOf(false) }
+
+    LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        items(accounts) { account ->
+            Card(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(12.dp)) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text(account.name, fontWeight = FontWeight.Medium)
+                        Text(AmountFormat.rupiah(account.currentEstimatedBalance), style = MaterialTheme.typography.titleMedium)
+                    }
+                    Text("${account.kind.name} • ${account.provider.name}", style = MaterialTheme.typography.bodyMedium)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Switch(checked = account.includeInNetWorth, onCheckedChange = { viewModel.setIncludeInNetWorth(account, it) })
+                        Text("Include in net worth", style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+            }
+        }
+
+        item {
+            Card(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Add account", style = MaterialTheme.typography.titleMedium)
+                    OutlinedTextField(name, { name = it }, label = { Text("Name (e.g. BCA)") }, modifier = Modifier.fillMaxWidth())
+
+                    ExposedDropdownMenuBox(expanded = providerExpanded, onExpandedChange = { providerExpanded = it }) {
+                        TextField(
+                            value = provider.name,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Provider") },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = providerExpanded) },
+                            modifier = Modifier.fillMaxWidth().menuAnchor()
+                        )
+                        ExposedDropdownMenu(expanded = providerExpanded, onDismissRequest = { providerExpanded = false }) {
+                            AccountProvider.entries.forEach { p ->
+                                DropdownMenuItem(text = { Text(p.name) }, onClick = { provider = p; providerExpanded = false })
+                            }
+                        }
+                    }
+
+                    OutlinedTextField(openingBalance, { openingBalance = it }, label = { Text("Opening balance") }, modifier = Modifier.fillMaxWidth())
+
+                    Button(onClick = {
+                        val balance = openingBalance.toLongOrNull() ?: 0
+                        if (name.isNotBlank()) {
+                            val kind = when (provider) {
+                                AccountProvider.BCA, AccountProvider.SEABANK -> AccountKind.BANK
+                                AccountProvider.GOPAY, AccountProvider.SHOPEEPAY -> AccountKind.EWALLET
+                                AccountProvider.CASH, AccountProvider.OTHER -> AccountKind.MANUAL
+                            }
+                            viewModel.createAccount(name, kind, provider, balance)
+                            name = ""
+                            openingBalance = ""
+                        }
+                    }) { Text("Add Account") }
+                }
+            }
+        }
+    }
+}

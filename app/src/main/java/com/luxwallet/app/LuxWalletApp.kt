@@ -1,0 +1,78 @@
+package com.luxwallet.app
+
+import android.app.Application
+import androidx.room.Room
+import androidx.work.Configuration
+import com.luxwallet.app.core.common.AppPreferences
+import com.luxwallet.app.core.database.LuxDatabase
+import com.luxwallet.app.data.AccountRepository
+import com.luxwallet.app.data.AssetRepository
+import com.luxwallet.app.data.BackupRepository
+import com.luxwallet.app.data.BudgetRepository
+import com.luxwallet.app.data.CategoryRepository
+import com.luxwallet.app.data.CsvExportRepository
+import com.luxwallet.app.data.FinancialProfileRepository
+import com.luxwallet.app.data.GoalRepository
+import com.luxwallet.app.data.LiabilityRepository
+import com.luxwallet.app.data.MerchantRuleRepository
+import com.luxwallet.app.data.NotificationRepository
+import com.luxwallet.app.data.TransactionRepository
+import com.luxwallet.app.parser.core.ParserRegistry
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+
+/**
+ * Simple hand-rolled DI container (PRD §54.2: "prefer simple deterministic implementations") —
+ * no DI framework needed for a single-module, single-user-density app.
+ */
+class LuxWalletApp : Application(), Configuration.Provider {
+
+    val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+    val database: LuxDatabase by lazy {
+        Room.databaseBuilder(this, LuxDatabase::class.java, LuxDatabase.DATABASE_NAME)
+            .build()
+    }
+
+    val preferences: AppPreferences by lazy { AppPreferences(this) }
+    val parserRegistry: ParserRegistry by lazy { ParserRegistry() }
+
+    val accountRepository: AccountRepository by lazy { AccountRepository(database.accountDao()) }
+    val categoryRepository: CategoryRepository by lazy { CategoryRepository(database.categoryDao()) }
+    val assetRepository: AssetRepository by lazy { AssetRepository(database.assetDao()) }
+    val liabilityRepository: LiabilityRepository by lazy { LiabilityRepository(database.liabilityDao()) }
+    val budgetRepository: BudgetRepository by lazy { BudgetRepository(database.budgetDao()) }
+    val goalRepository: GoalRepository by lazy { GoalRepository(database.goalDao()) }
+    val financialProfileRepository: FinancialProfileRepository by lazy { FinancialProfileRepository(database.financialProfileDao()) }
+    val merchantRuleRepository: MerchantRuleRepository by lazy { MerchantRuleRepository(database.merchantRuleDao()) }
+    val notificationRepository: NotificationRepository by lazy { NotificationRepository(database.notificationObservationDao()) }
+
+    val transactionRepository: TransactionRepository by lazy {
+        TransactionRepository(
+            transactionDao = database.transactionDao(),
+            ledgerEntryDao = database.ledgerEntryDao(),
+            observationDao = database.notificationObservationDao(),
+            accountDao = database.accountDao(),
+            merchantRuleDao = database.merchantRuleDao(),
+            categoryRepository = categoryRepository,
+            database = database
+        )
+    }
+
+    val backupRepository: BackupRepository by lazy { BackupRepository(this, database) }
+    val csvExportRepository: CsvExportRepository by lazy { CsvExportRepository(database) }
+
+    override fun onCreate() {
+        super.onCreate()
+        applicationScope.launch {
+            categoryRepository.seedDefaultsIfEmpty()
+        }
+    }
+
+    override val workManagerConfiguration: Configuration
+        get() = Configuration.Builder()
+            .setMinimumLoggingLevel(android.util.Log.INFO)
+            .build()
+}

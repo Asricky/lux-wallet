@@ -1,0 +1,71 @@
+package com.luxwallet.app.core.database
+
+import androidx.room.Database
+import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
+import com.luxwallet.app.core.database.dao.AccountDao
+import com.luxwallet.app.core.database.dao.AssetDao
+import com.luxwallet.app.core.database.dao.BudgetDao
+import com.luxwallet.app.core.database.dao.CategoryDao
+import com.luxwallet.app.core.database.dao.FinancialProfileDao
+import com.luxwallet.app.core.database.dao.GoalDao
+import com.luxwallet.app.core.database.dao.LedgerEntryDao
+import com.luxwallet.app.core.database.dao.LiabilityDao
+import com.luxwallet.app.core.database.dao.MerchantRuleDao
+import com.luxwallet.app.core.database.dao.NotificationObservationDao
+import com.luxwallet.app.core.database.dao.TransactionDao
+import com.luxwallet.app.core.database.entity.AccountEntity
+import com.luxwallet.app.core.database.entity.AssetEntity
+import com.luxwallet.app.core.database.entity.BudgetEntity
+import com.luxwallet.app.core.database.entity.CategoryEntity
+import com.luxwallet.app.core.database.entity.FinancialProfileEntity
+import com.luxwallet.app.core.database.entity.GoalEntity
+import com.luxwallet.app.core.database.entity.LedgerEntryEntity
+import com.luxwallet.app.core.database.entity.LiabilityEntity
+import com.luxwallet.app.core.database.entity.MerchantRuleEntity
+import com.luxwallet.app.core.database.entity.NotificationObservationEntity
+import com.luxwallet.app.core.database.entity.TransactionEntity
+
+/**
+ * Schema version 1 (MVP). Any future schema change MUST add a Room [androidx.room.migration.Migration]
+ * here rather than relying on destructive migration (PRD §48) — [DEV_ALLOW_DESTRUCTIVE_MIGRATION]
+ * exists only as an explicit, developer-opt-in escape hatch for pre-release local iteration.
+ */
+@Database(
+    entities = [
+        AccountEntity::class,
+        AssetEntity::class,
+        LiabilityEntity::class,
+        CategoryEntity::class,
+        TransactionEntity::class,
+        LedgerEntryEntity::class,
+        NotificationObservationEntity::class,
+        MerchantRuleEntity::class,
+        BudgetEntity::class,
+        GoalEntity::class,
+        FinancialProfileEntity::class
+    ],
+    version = 1,
+    exportSchema = true
+)
+@TypeConverters(Converters::class)
+abstract class LuxDatabase : RoomDatabase() {
+    abstract fun accountDao(): AccountDao
+    abstract fun assetDao(): AssetDao
+    abstract fun liabilityDao(): LiabilityDao
+    abstract fun categoryDao(): CategoryDao
+    abstract fun transactionDao(): TransactionDao
+    abstract fun ledgerEntryDao(): LedgerEntryDao
+    abstract fun notificationObservationDao(): NotificationObservationDao
+    abstract fun merchantRuleDao(): MerchantRuleDao
+    abstract fun budgetDao(): BudgetDao
+    abstract fun goalDao(): GoalDao
+    abstract fun financialProfileDao(): FinancialProfileDao
+
+    companion object {
+        const val DATABASE_NAME = "lux_wallet.db"
+
+        /** Never true in a release build; guarded in [com.luxwallet.app.LuxWalletApp]. */
+        const val DEV_ALLOW_DESTRUCTIVE_MIGRATION = false
+    }
+}
