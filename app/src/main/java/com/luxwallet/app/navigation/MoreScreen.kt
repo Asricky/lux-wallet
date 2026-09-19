@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.Arrangement
 private data class MoreItem(val label: String, val route: String)
 
 private val MORE_ITEMS = listOf(
+    MoreItem("Kalkulator keuangan", LuxDestinations.CALCULATOR),
+    MoreItem("Pengaturan notifikasi", LuxDestinations.NOTIFICATION_SETTINGS),
     MoreItem("Transaksi", LuxDestinations.TRANSACTIONS),
     MoreItem("Perlu ditinjau", LuxDestinations.NEEDS_REVIEW),
     MoreItem("Anggaran & target", LuxDestinations.BUDGETS_GOALS),

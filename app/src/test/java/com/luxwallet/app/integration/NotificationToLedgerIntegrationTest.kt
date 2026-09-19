@@ -69,14 +69,15 @@ class NotificationToLedgerIntegrationTest {
         db.close()
     }
 
-    private suspend fun ingestNotification(sourceApp: SourceApp, title: String, text: String, postedAt: Long) {
+    private suspend fun ingestNotification(sourceApp: SourceApp, title: String, text: String, postedAt: Long,
+        notificationKey: String? = null, eventTime: Long? = null) {
         val input = NotificationInput(sourceApp = sourceApp, title = title, text = text, postedAt = postedAt)
         val hash = NotificationRepository.hashPayload(sourceApp.name, sourceApp.name, title, text, postedAt)
         val observation = NotificationObservationEntity(
-            sourceApp = sourceApp, packageName = sourceApp.name, notificationKey = null,
+            sourceApp = sourceApp, packageName = sourceApp.name, notificationKey = notificationKey,
             title = title, text = text, bigText = null, subText = null, textLines = null,
             postedAt = postedAt, receivedAt = postedAt, rawPayloadHash = hash,
-            parserVersion = ParserRegistry.PARSER_VERSION, parseStatus = ParseStatus.PENDING
+            parserVersion = ParserRegistry.PARSER_VERSION, parseStatus = ParseStatus.PENDING, eventTime = eventTime
         )
         val id = notificationRepository.insertIfNew(observation) ?: return
         val stored = db.notificationObservationDao().getById(id)!!
@@ -233,5 +234,74 @@ class NotificationToLedgerIntegrationTest {
         assertTrue(db.transactionDao().getAllOnce().isEmpty())
         assertEquals(1, notificationRepository.getPending().size)
         assertEquals(7500000L, accountRepository.getById(seabankAccountId)!!.currentEstimatedBalance)
+    }
+
+    @Test fun myBcaThreeRupiahRedeliveryUsesOriginalEventIdentity() = runBlocking {
+        val body = "Pengeluaran sebesar IDR 3.00 di kategori Belanja Bulanan."
+        ingestNotification(SourceApp.MYBCA, "Catatan Finansial", body, 10000L, "bca:key", 9000L)
+        ingestNotification(SourceApp.MYBCA, "Catatan Finansial", body, 12000L, "bca:key", 9000L)
+        assertEquals(1, db.transactionDao().getAllOnce().size)
+        assertEquals(3L, com.luxwallet.app.core.common.CashflowMath.totalExpense(db.transactionDao().getAllOnce()))
+        assertEquals(15000000L - 3L, accountRepository.getById(bcaAccountId)!!.currentEstimatedBalance)
+    }
+
+    @Test fun myBcaAmbiguousDuplicateIsHeldUntilConfirmedAsSeparatePayment() = runBlocking {
+        val body = "Pengeluaran sebesar IDR 3.00 di kategori Belanja Bulanan."
+        ingestNotification(SourceApp.MYBCA, "Catatan Finansial", body, 10000L, "first", 9000L)
+        ingestNotification(SourceApp.MYBCA, "Catatan Finansial", body, 12000L, "second", 11000L)
+        val held = db.transactionDao().getAllOnce().single { it.reviewReason == com.luxwallet.app.core.model.ReviewReason.POSSIBLE_DUPLICATE }
+        assertEquals(3L, com.luxwallet.app.core.common.CashflowMath.totalExpense(db.transactionDao().getAllOnce()))
+        assertEquals(15000000L - 3L, accountRepository.getById(bcaAccountId)!!.currentEstimatedBalance)
+        transactionRepository.confirm(held.id)
+        transactionRepository.confirm(held.id)
+        assertEquals(6L, com.luxwallet.app.core.common.CashflowMath.totalExpense(db.transactionDao().getAllOnce()))
+        assertEquals(15000000L - 6L, accountRepository.getById(bcaAccountId)!!.currentEstimatedBalance)
+    }
+
+    @Test fun myBcaSameAmountDifferentCategoryRemainsIndependent() = runBlocking {
+        ingestNotification(SourceApp.MYBCA, "Catatan Finansial", "Pengeluaran sebesar IDR 3.00 di kategori Belanja Bulanan.", 10000L)
+        ingestNotification(SourceApp.MYBCA, "Catatan Finansial", "Pengeluaran sebesar IDR 3.00 di kategori Makanan.", 12000L)
+        assertEquals(6L, com.luxwallet.app.core.common.CashflowMath.totalExpense(db.transactionDao().getAllOnce()))
+    }
+
+    @Test fun myBcaReplayAfterRawRetentionDoesNotDoubleCount() = runBlocking {
+        val body = "Pengeluaran sebesar IDR 3.00 di kategori Belanja Bulanan."
+        ingestNotification(SourceApp.MYBCA, "Catatan Finansial", body, 10000L, "bca:key", 9000L)
+        notificationRepository.purgeAccordingToPolicy(com.luxwallet.app.core.model.RawRetentionPolicy.NEVER)
+        assertEquals("", db.notificationObservationDao().getById(1L)!!.text)
+        ingestNotification(SourceApp.MYBCA, "Catatan Finansial", body, 12000L, "bca:key", 9000L)
+        assertEquals(1, db.transactionDao().getAllOnce().size)
+    }
+
+    @Test fun changingAccountValueCreatesAdjustmentWithoutIncomeOrExpense() = runBlocking {
+        transactionRepository.setAccountBalance(bcaAccountId, 10000000L)
+        assertEquals(10000000L, accountRepository.getById(bcaAccountId)!!.currentEstimatedBalance)
+        val all = db.transactionDao().getAllOnce()
+        assertEquals(TransactionType.BALANCE_ADJUSTMENT, all.single().type)
+        assertEquals(0L, com.luxwallet.app.core.common.CashflowMath.totalExpense(all))
+        assertEquals(0L, com.luxwallet.app.core.common.CashflowMath.totalIncome(all))
+    }
+
+    @Test fun repeatedHeldNotificationDoesNotCreateMoreReviewRows() = runBlocking {
+        val body = "Pengeluaran sebesar IDR 3.00 di kategori Belanja Bulanan."
+        ingestNotification(SourceApp.MYBCA, "Catatan Finansial", body, 10000L, "first", 9000L)
+        ingestNotification(SourceApp.MYBCA, "Catatan Finansial", body, 12000L, "second", 11000L)
+        ingestNotification(SourceApp.MYBCA, "Catatan Finansial", body, 13000L, "second", 11000L)
+        assertEquals(2, db.transactionDao().getAllOnce().size)
+        assertEquals(15000000L - 3L, accountRepository.getById(bcaAccountId)!!.currentEstimatedBalance)
+    }
+
+    @Test fun upgradingReviewsExistingDoubleCountAndRestoresBalanceOnce() = runBlocking {
+        val body = "Pengeluaran sebesar IDR 3.00 di kategori Belanja Bulanan."
+        ingestNotification(SourceApp.MYBCA, "Catatan Finansial", body, 10000L)
+        ingestNotification(SourceApp.MYBCA, "Catatan Finansial", body, 50000L)
+        assertEquals(15000000L - 6L, accountRepository.getById(bcaAccountId)!!.currentEstimatedBalance)
+        // Recreate the v1 state: both notifications were counted, although posted seconds apart.
+        val second = db.notificationObservationDao().getById(2)!!
+        db.notificationObservationDao().update(second.copy(postedAt = 12000L, contentHash = null))
+        transactionRepository.reviewExistingDuplicates()
+        transactionRepository.reviewExistingDuplicates()
+        assertEquals(15000000L - 3L, accountRepository.getById(bcaAccountId)!!.currentEstimatedBalance)
+        assertEquals(1, db.transactionDao().getAllOnce().count { it.reviewReason == com.luxwallet.app.core.model.ReviewReason.POSSIBLE_DUPLICATE })
     }
 }

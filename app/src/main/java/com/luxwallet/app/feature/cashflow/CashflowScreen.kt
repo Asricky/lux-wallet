@@ -47,18 +47,10 @@ fun CashflowScreen() {
 
     LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = { viewModel.setMonth(state.yearMonth.minusMonths(1)) }) {
-                    Icon(Icons.Filled.ChevronLeft, contentDescription = "Previous month")
-                }
-                Text(
-                    "${state.yearMonth.month.name.lowercase().replaceFirstChar { it.uppercase() }} ${state.yearMonth.year}",
-                    style = MaterialTheme.typography.titleMedium
-                )
-                IconButton(onClick = { viewModel.setMonth(state.yearMonth.plusMonths(1)) }) {
-                    Icon(Icons.Filled.ChevronRight, contentDescription = "Next month")
-                }
-            }
+            val months = (0L..59L).map { java.time.YearMonth.now().minusMonths(it) }
+            val formatter = java.time.format.DateTimeFormatter.ofPattern("MMMM yyyy", java.util.Locale("id", "ID"))
+            com.luxwallet.app.core.ui.component.ChoiceField("Periode", state.yearMonth.format(formatter),
+                months.map { it.format(formatter) }, { viewModel.setMonth(months[it]) })
         }
 
         item {
@@ -112,23 +104,7 @@ fun CashflowScreen() {
 
 @Composable
 private fun AccountFilterDropdown(state: CashflowUiState, viewModel: CashflowViewModel) {
-    var expanded by remember { mutableStateOf(false) }
-    val selectedLabel = state.accounts.firstOrNull { it.id == state.selectedAccountId }?.name ?: "Semua Akun"
-
-    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
-        TextField(
-            value = selectedLabel,
-            onValueChange = {},
-            readOnly = true,
-            label = { Text("Akun") },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier.fillMaxWidth().menuAnchor()
-        )
-        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            DropdownMenuItem(text = { Text("Semua Akun") }, onClick = { viewModel.setAccountFilter(null); expanded = false })
-            state.accounts.forEach { account ->
-                DropdownMenuItem(text = { Text(account.name) }, onClick = { viewModel.setAccountFilter(account.id); expanded = false })
-            }
-        }
-    }
+    val selected = state.accounts.firstOrNull { it.id == state.selectedAccountId }?.name ?: "Semua rekening"
+    com.luxwallet.app.core.ui.component.ChoiceField("Rekening", selected, listOf("Semua rekening") + state.accounts.map { it.name },
+        { viewModel.setAccountFilter(if (it == 0) null else state.accounts[it - 1].id) })
 }

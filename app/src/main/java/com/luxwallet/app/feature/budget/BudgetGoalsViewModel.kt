@@ -37,11 +37,31 @@ class BudgetGoalsViewModel(
     private val budgetRepository: BudgetRepository,
     private val goalRepository: GoalRepository,
     private val categoryRepository: CategoryRepository,
-    private val transactionRepository: TransactionRepository
+    private val transactionRepository: TransactionRepository,
+    private val preferences: com.luxwallet.app.core.common.AppPreferences
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(BudgetGoalsUiState())
     val uiState: StateFlow<BudgetGoalsUiState> = _uiState
+    val saving = MutableStateFlow(false)
+    val message = MutableStateFlow<String?>(null)
+    fun savePlan(profile: FinancialProfileEntity, transportDaily: Long, weekdaysOnly: Boolean) {
+        if (saving.value) return
+        saving.value = true
+        message.value = null
+        viewModelScope.launch {
+            try {
+                require(listOf(profile.expectedMonthlyIncome, profile.fixedObligations, profile.debtPayments,
+                    profile.savingsTargetMonthly, profile.investmentTargetMonthly, profile.plannedExpensesMonthly,
+                    profile.safetyBufferMonthly).all { it in 0..1_000_000_000_000 })
+                preferences.setTransportPlan(transportDaily, weekdaysOnly)
+                financialProfileRepository.save(profile)
+                message.value = "Rencana disimpan."
+            } catch (e: kotlinx.coroutines.CancellationException) { throw e }
+            catch (_: Exception) { message.value = "Rencana belum tersimpan. Periksa semua nominal." }
+            finally { saving.value = false }
+        }
+    }
 
     private val currentYearMonth = YearMonth.now().toString() // "yyyy-MM"
 
@@ -51,10 +71,11 @@ class BudgetGoalsViewModel(
                 financialProfileRepository.observe(),
                 budgetRepository.observeForMonth(currentYearMonth),
                 goalRepository.observeAll(),
-                categoryRepository.observeAll()
-            ) { profile, budgets, goals, categories ->
+                categoryRepository.observeAll(),
+                transactionRepository.observeAll()
+            ) { profile, budgets, goals, categories, transactions ->
                 val range = MonthRange.of(YearMonth.now())
-                val monthTx = transactionRepository.getInRange(range.startInclusiveMillis, range.endExclusiveMillis)
+                val monthTx = transactions.filter { it.transactionTime >= range.startInclusiveMillis && it.transactionTime < range.endExclusiveMillis }
                 val categoryName: (Long?) -> String = { id -> categories.firstOrNull { it.id == id }?.name ?: "Uncategorized" }
                 val expenseByCategory = CashflowMath.expenseByCategory(monthTx, categoryName).toMap()
                 val totalExpense = CashflowMath.totalExpense(monthTx)
@@ -99,7 +120,7 @@ class BudgetGoalsViewModel(
 
     companion object {
         fun create(app: LuxWalletApp) = BudgetGoalsViewModel(
-            app.financialProfileRepository, app.budgetRepository, app.goalRepository, app.categoryRepository, app.transactionRepository
+            app.financialProfileRepository, app.budgetRepository, app.goalRepository, app.categoryRepository, app.transactionRepository, app.preferences
         )
     }
 }

@@ -50,7 +50,7 @@ class TransactionsViewModel(
                             (categoryNames[it.categoryId]?.contains(query, ignoreCase = true) == true)
                     }
                 }
-                TransactionsUiState(filtered, accountNames, categoryNames, query, isLoading = false)
+                TransactionsUiState(filtered.filter { it.reviewStatus != com.luxwallet.app.core.model.ReviewStatus.IGNORED }, accountNames, categoryNames, query, isLoading = false)
             }.collect { _uiState.value = it }
         }
     }

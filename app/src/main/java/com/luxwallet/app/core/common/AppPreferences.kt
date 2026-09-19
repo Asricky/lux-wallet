@@ -24,6 +24,10 @@ class AppPreferences(private val context: Context) {
 
     private object Keys {
         val ONBOARDING_COMPLETE = booleanPreferencesKey("onboarding_complete")
+        val AMOUNTS_HIDDEN = booleanPreferencesKey("amounts_hidden")
+        val TRANSPORT_DAILY = intPreferencesKey("transport_daily")
+        val TRANSPORT_WEEKDAYS = booleanPreferencesKey("transport_weekdays")
+        val PLAN_V2_READY = booleanPreferencesKey("plan_v2_ready")
         val ENABLED_SOURCES = stringSetPreferencesKey("enabled_sources")
         val RAW_RETENTION_POLICY = stringPreferencesKey("raw_retention_policy")
         val BIOMETRIC_LOCK_ENABLED = booleanPreferencesKey("biometric_lock_enabled")
@@ -38,6 +42,18 @@ class AppPreferences(private val context: Context) {
 
     val onboardingComplete: Flow<Boolean> =
         context.dataStore.data.map { it[Keys.ONBOARDING_COMPLETE] ?: false }
+
+    val amountsHidden = context.dataStore.data.map { it[Keys.AMOUNTS_HIDDEN] ?: false }
+    suspend fun setAmountsHidden(hidden: Boolean) { context.dataStore.edit { it[Keys.AMOUNTS_HIDDEN] = hidden } }
+    val transportPlan = context.dataStore.data.map {
+        TransportPlan((it[Keys.TRANSPORT_DAILY] ?: 6000).toLong(), it[Keys.TRANSPORT_WEEKDAYS] ?: true)
+    }
+    suspend fun setTransportPlan(daily: Long, weekdaysOnly: Boolean) {
+        require(daily in 0..10_000_000)
+        context.dataStore.edit { it[Keys.TRANSPORT_DAILY] = daily.toInt(); it[Keys.TRANSPORT_WEEKDAYS] = weekdaysOnly }
+    }
+    val planV2Ready = context.dataStore.data.map { it[Keys.PLAN_V2_READY] ?: false }
+    suspend fun setPlanV2Ready() { context.dataStore.edit { it[Keys.PLAN_V2_READY] = true } }
 
     suspend fun setOnboardingComplete(complete: Boolean) {
         context.dataStore.edit { it[Keys.ONBOARDING_COMPLETE] = complete }

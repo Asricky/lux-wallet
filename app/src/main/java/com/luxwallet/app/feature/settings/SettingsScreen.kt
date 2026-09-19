@@ -187,34 +187,20 @@ private fun ToggleRow(label: String, checked: Boolean, onChange: (Boolean) -> Un
 
 @Composable
 private fun RetentionDropdown(current: RawRetentionPolicy, onSelect: (RawRetentionPolicy) -> Unit) {
-    var expanded by remember { mutableStateOf(false) }
-    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
-        TextField(
-            value = current.name, onValueChange = {}, readOnly = true, label = { Text("Simpan notifikasi mentah") },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier.fillMaxWidth().menuAnchor()
-        )
-        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            RawRetentionPolicy.entries.forEach { policy ->
-                DropdownMenuItem(text = { Text(policy.name) }, onClick = { onSelect(policy); expanded = false })
-            }
-        }
-    }
+    val labels = listOf("Hapus setelah diproses", "7 hari", "30 hari", "Simpan terus")
+    com.luxwallet.app.core.ui.component.ChoiceField("Simpan isi notifikasi", labels[current.ordinal], labels,
+        { onSelect(RawRetentionPolicy.entries[it]) })
 }
-
 @Composable
 private fun ThemeDropdown(current: ThemeMode, onSelect: (ThemeMode) -> Unit) {
-    var expanded by remember { mutableStateOf(false) }
-    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
-        TextField(
-            value = current.name, onValueChange = {}, readOnly = true, label = { Text("Tema") },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier.fillMaxWidth().menuAnchor()
-        )
-        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            ThemeMode.entries.forEach { mode ->
-                DropdownMenuItem(text = { Text(mode.name) }, onClick = { onSelect(mode); expanded = false })
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("Mode tampilan", style = MaterialTheme.typography.titleMedium)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf(ThemeMode.LIGHT to "Light", ThemeMode.DARK to "Dark", ThemeMode.SYSTEM to "Sistem").forEach { (mode, label) ->
+                androidx.compose.material3.FilterChip(selected = current == mode, onClick = { onSelect(mode) },
+                    label = { Text(label) }, modifier = Modifier.weight(1f))
             }
         }
+        Text("Pilihan tersimpan dan langsung diterapkan.", style = MaterialTheme.typography.bodySmall)
     }
 }

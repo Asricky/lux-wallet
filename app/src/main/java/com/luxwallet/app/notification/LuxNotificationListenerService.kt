@@ -85,7 +85,9 @@ class LuxNotificationListenerService : NotificationListenerService() {
                 receivedAt = System.currentTimeMillis(),
                 rawPayloadHash = hash,
                 parserVersion = ParserRegistry.PARSER_VERSION,
-                parseStatus = ParseStatus.PENDING
+                parseStatus = ParseStatus.PENDING,
+                eventTime = sbn.notification.`when`.takeIf { it > 0 },
+                contentHash = com.luxwallet.app.engine.NotificationIdentity.contentHash(title, text, bigText, textLines.joinToString("\n"))
             )
 
             val insertedId = app.notificationRepository.insertIfNew(observation)

@@ -32,5 +32,7 @@ data class NotificationObservationEntity(
     val parserVersion: Int,
     val parseStatus: ParseStatus,
     val parseFailureReason: String? = null,
-    val linkedTransactionId: Long? = null
+    val linkedTransactionId: Long? = null,
+    val eventTime: Long? = null,
+    val contentHash: String? = null
 )

@@ -37,7 +37,6 @@ fun RulesScreen() {
     val state by viewModel.uiState.collectAsState()
 
     var merchantText by remember { mutableStateOf("") }
-    var categoryExpanded by remember { mutableStateOf(false) }
     var selectedCategoryId by remember { mutableStateOf<Long?>(null) }
 
     LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -58,18 +57,8 @@ fun RulesScreen() {
                     OutlinedTextField(merchantText, { merchantText = it }, label = { Text("Merchant name contains") }, modifier = Modifier.fillMaxWidth())
 
                     val selectedName = state.categories.firstOrNull { it.id == selectedCategoryId }?.name ?: "Pilih kategori"
-                    ExposedDropdownMenuBox(expanded = categoryExpanded, onExpandedChange = { categoryExpanded = it }) {
-                        TextField(
-                            value = selectedName, onValueChange = {}, readOnly = true,
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
-                            modifier = Modifier.fillMaxWidth().menuAnchor()
-                        )
-                        ExposedDropdownMenu(expanded = categoryExpanded, onDismissRequest = { categoryExpanded = false }) {
-                            state.categories.forEach { c ->
-                                DropdownMenuItem(text = { Text(c.name) }, onClick = { selectedCategoryId = c.id; categoryExpanded = false })
-                            }
-                        }
-                    }
+                    com.luxwallet.app.core.ui.component.ChoiceField("Kategori", selectedName,
+                        state.categories.map { it.name }, { selectedCategoryId = state.categories[it].id })
 
                     Button(onClick = {
                         selectedCategoryId?.let { viewModel.addRule(merchantText, it) }

@@ -50,10 +50,12 @@ class CashflowViewModel(
                 accountRepository.observeActiveAccounts(),
                 categoryRepository.observeAll()
             ) { controls, accounts, categories -> Triple(controls, accounts, categories) }
-                .collect { (controls, accounts, categories) ->
+                .combine(transactionRepository.observeAll()) { inputs, transactions -> inputs to transactions }
+                .collect { (inputs, transactions) ->
+                    val (controls, accounts, categories) = inputs
                     val (yearMonth, tab, selectedAccountId) = controls
                     val range = MonthRange.of(yearMonth)
-                    var monthTx = transactionRepository.getInRange(range.startInclusiveMillis, range.endExclusiveMillis)
+                    var monthTx = transactions.filter { it.transactionTime >= range.startInclusiveMillis && it.transactionTime < range.endExclusiveMillis }
                     if (selectedAccountId != null) {
                         monthTx = monthTx.filter { it.sourceAccountId == selectedAccountId || it.destinationAccountId == selectedAccountId }
                     }

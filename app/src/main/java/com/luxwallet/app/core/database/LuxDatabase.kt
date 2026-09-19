@@ -45,7 +45,7 @@ import com.luxwallet.app.core.database.entity.TransactionEntity
         GoalEntity::class,
         FinancialProfileEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -63,6 +63,12 @@ abstract class LuxDatabase : RoomDatabase() {
     abstract fun financialProfileDao(): FinancialProfileDao
 
     companion object {
+        val MIGRATION_1_2 = object : androidx.room.migration.Migration(1, 2) {
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE notification_observations ADD COLUMN eventTime INTEGER")
+                db.execSQL("ALTER TABLE notification_observations ADD COLUMN contentHash TEXT")
+            }
+        }
         const val DATABASE_NAME = "lux_wallet.db"
 
         /** Never true in a release build; guarded in [com.luxwallet.app.LuxWalletApp]. */

@@ -1,68 +1,45 @@
 package com.luxwallet.app.core.ui.component
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Card
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.luxwallet.app.core.common.AmountFormat
 import com.luxwallet.app.core.database.entity.TransactionEntity
-import com.luxwallet.app.core.model.TransactionDirection
+import com.luxwallet.app.core.model.*
 import com.luxwallet.app.core.ui.theme.LocalLuxSemanticColors
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
-private val CARD_TIME_FORMAT = DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm")
-
-/** PRD §28: a normal card ("Merchant / Type • Source / -Amount / Category / Time") and a distinct, non-red internal-transfer card. */
-@Composable
-fun TransactionCard(
-    transaction: TransactionEntity,
-    sourceAccountName: String?,
-    destinationAccountName: String?,
-    categoryName: String?,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val semantic = LocalLuxSemanticColors.current
-    val time = Instant.ofEpochMilli(transaction.transactionTime).atZone(ZoneId.systemDefault()).format(CARD_TIME_FORMAT)
-
-    Card(modifier = modifier.fillMaxWidth().clickable(onClick = onClick)) {
-        Column(Modifier.padding(12.dp)) {
-            if (transaction.isInternalTransfer) {
-                Text(
-                    "${sourceAccountName ?: "?"} → ${destinationAccountName ?: "?"}",
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium
-                )
-                Text("Internal Transfer", color = semantic.transfer, style = MaterialTheme.typography.bodyMedium)
-                Row(Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween) {
-                    Text(AmountFormat.rupiah(transaction.amount), color = semantic.transfer, fontWeight = FontWeight.Medium)
-                    Text(time, style = MaterialTheme.typography.bodyMedium)
-                }
-            } else {
-                val title = transaction.merchantName ?: transaction.counterpartyName ?: (categoryName ?: "Transaction")
-                Text(title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
-                Text(
-                    "${transaction.type.name.replace('_', ' ')} • ${sourceAccountName ?: "?"}",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                val amountColor = if (transaction.direction == TransactionDirection.OUT) semantic.expense else semantic.income
-                val sign = if (transaction.direction == TransactionDirection.OUT) "-" else "+"
-                Row(Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween) {
-                    Text("$sign${AmountFormat.rupiah(transaction.amount)}", color = amountColor, fontWeight = FontWeight.Medium)
-                    Text(categoryName ?: "Uncategorized", style = MaterialTheme.typography.bodyMedium)
-                }
-                Text(time, style = MaterialTheme.typography.bodyMedium)
+@Composable fun TransactionCard(transaction: TransactionEntity, sourceAccountName: String?, destinationAccountName: String?,
+    categoryName: String?, onClick: () -> Unit, modifier: Modifier = Modifier, hideAmounts: Boolean = false) {
+    val tx = transaction
+    val colors = LocalLuxSemanticColors.current
+    val date = Instant.ofEpochMilli(tx.transactionTime).atZone(ZoneId.systemDefault())
+    val held = tx.reviewReason == ReviewReason.POSSIBLE_DUPLICATE
+    val color = if (held) colors.warning else if (tx.isInternalTransfer) colors.transfer else if (tx.direction == TransactionDirection.OUT) colors.expense else colors.income
+    Card(onClick, modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(date.dayOfMonth.toString(), style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(date.format(DateTimeFormatter.ofPattern("MMM", Locale("id", "ID"))), style = MaterialTheme.typography.labelSmall)
             }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(if (tx.isInternalTransfer) "${sourceAccountName ?: "Rekening"} → ${destinationAccountName ?: "Rekening"}"
+                    else tx.merchantName ?: tx.counterpartyName ?: categoryName ?: "Transaksi", style = MaterialTheme.typography.titleSmall)
+                Text(if (hideAmounts) "Rp ••••••" else AmountFormat.rupiah(tx.amount), color = color, style = MaterialTheme.typography.titleMedium)
+                Text(if (tx.isInternalTransfer) "Pindah saldo sendiri" else "${sourceAccountName ?: "Belum ada rekening"} · ${categoryName ?: "Belum dikategorikan"}",
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (held) Text("Calon duplikat · belum dihitung", color = colors.warning, style = MaterialTheme.typography.labelSmall)
+                else if (tx.reviewStatus == ReviewStatus.NEEDS_REVIEW) Text("Perlu ditinjau", color = colors.warning, style = MaterialTheme.typography.labelSmall)
+            }
+            Icon(Icons.Outlined.ChevronRight, "Detail", tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

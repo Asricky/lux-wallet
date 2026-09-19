@@ -26,9 +26,13 @@ fun LuxNavGraph(navController: NavHostController, startDestination: String = Lux
     NavHost(navController = navController, startDestination = startDestination) {
         composable(LuxDestinations.HOME) { HomeScreen(onNavigate = { navController.navigate(it) }) }
         composable(LuxDestinations.CASHFLOW) { CashflowScreen() }
-        composable(LuxDestinations.ASSETS) { AssetsScreen() }
+        composable(LuxDestinations.ASSETS) { AssetsScreen(onAccounts = { navController.navigate(LuxDestinations.ACCOUNTS) }) }
         composable(LuxDestinations.MORE) { MoreScreen(onNavigate = { navController.navigate(it) }) }
-        composable(LuxDestinations.QUICK_ADD) { QuickAddScreen(onDone = { navController.popBackStack() }) }
+        composable(LuxDestinations.QUICK_ADD) { QuickAddScreen(onDone = { navController.popBackStack() }, onAccounts = { navController.navigate(LuxDestinations.ACCOUNTS) }) }
+        composable(LuxDestinations.CALCULATOR) { com.luxwallet.app.feature.calculator.CalculatorScreen() }
+        composable(LuxDestinations.NOTIFICATION_SETTINGS) {
+            com.luxwallet.app.feature.settings.NotificationSettingsScreen(onDiagnostics = { navController.navigate(LuxDestinations.NOTIFICATION_LAB) })
+        }
 
         composable(LuxDestinations.TRANSACTIONS) {
             TransactionsScreen(onTransactionClick = { id -> navController.navigate(LuxDestinations.transactionDetail(id)) })

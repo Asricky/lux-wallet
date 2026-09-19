@@ -72,7 +72,7 @@ class TransactionDetailViewModel(
     fun confirm() {
         val tx = _uiState.value.transaction ?: return
         viewModelScope.launch {
-            rawTransactionDao.update(tx.copy(reviewStatus = ReviewStatus.CONFIRMED, reviewReason = null, updatedAt = System.currentTimeMillis()))
+            transactionRepositoryRef.confirm(tx.id)
         }
     }
 
@@ -80,13 +80,13 @@ class TransactionDetailViewModel(
         viewModelScope.launch {
             val tx = rawTransactionDao.getById(transactionId) ?: return@launch
             if (tx.reviewStatus == ReviewStatus.IGNORED) return@launch
-            rawTransactionDao.update(tx.copy(merchantName = merchant.ifBlank { null }, note = note.ifBlank { null },
-                reviewStatus = ReviewStatus.CONFIRMED, reviewReason = null, updatedAt = System.currentTimeMillis()))
+            transactionRepositoryRef.confirm(tx.id, merchant, note)
         }
     }
 
     fun setExcludedFromCashflow(excluded: Boolean) {
         val tx = _uiState.value.transaction ?: return
+        if (tx.reviewReason == com.luxwallet.app.core.model.ReviewReason.POSSIBLE_DUPLICATE) return
         viewModelScope.launch {
             rawTransactionDao.update(tx.copy(isExcludedFromCashflow = excluded, updatedAt = System.currentTimeMillis()))
         }

@@ -22,6 +22,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.first
 
 /**
  * Simple hand-rolled DI container (PRD §54.2: "prefer simple deterministic implementations") —
@@ -33,6 +34,7 @@ class LuxWalletApp : Application(), Configuration.Provider {
 
     val database: LuxDatabase by lazy {
         Room.databaseBuilder(this, LuxDatabase::class.java, LuxDatabase.DATABASE_NAME)
+            .addMigrations(LuxDatabase.MIGRATION_1_2)
             .build()
     }
 
@@ -68,6 +70,13 @@ class LuxWalletApp : Application(), Configuration.Provider {
         super.onCreate()
         applicationScope.launch {
             categoryRepository.seedDefaultsIfEmpty()
+            categoryRepository.resolveOrCreateTopLevel(com.luxwallet.app.core.common.TransportPlan.CATEGORY)
+            if (!preferences.planV2Ready.first()) {
+                val profile = financialProfileRepository.get()
+                financialProfileRepository.save(profile.copy(savingsTargetMonthly = 1_000_000, investmentTargetMonthly = 1_500_000))
+                transactionRepository.reviewExistingDuplicates()
+                preferences.setPlanV2Ready()
+            }
         }
     }
 

@@ -43,7 +43,6 @@ fun AccountsScreen() {
     var name by remember { mutableStateOf("") }
     var provider by remember { mutableStateOf(AccountProvider.BCA) }
     var openingBalance by remember { mutableStateOf("") }
-    var providerExpanded by remember { mutableStateOf(false) }
 
     LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         items(accounts) { account ->
@@ -68,26 +67,13 @@ fun AccountsScreen() {
                     Text("Add account", style = MaterialTheme.typography.titleMedium)
                     OutlinedTextField(name, { name = it }, label = { Text("Name (e.g. BCA)") }, modifier = Modifier.fillMaxWidth())
 
-                    ExposedDropdownMenuBox(expanded = providerExpanded, onExpandedChange = { providerExpanded = it }) {
-                        TextField(
-                            value = provider.name,
-                            onValueChange = {},
-                            readOnly = true,
-                            label = { Text("Provider") },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = providerExpanded) },
-                            modifier = Modifier.fillMaxWidth().menuAnchor()
-                        )
-                        ExposedDropdownMenu(expanded = providerExpanded, onDismissRequest = { providerExpanded = false }) {
-                            AccountProvider.entries.forEach { p ->
-                                DropdownMenuItem(text = { Text(p.name) }, onClick = { provider = p; providerExpanded = false })
-                            }
-                        }
-                    }
+                    com.luxwallet.app.core.ui.component.ChoiceField("Penyedia", provider.name,
+                        AccountProvider.entries.map { it.name }, { provider = AccountProvider.entries[it] })
 
                     OutlinedTextField(openingBalance, { openingBalance = it }, label = { Text("Opening balance") }, modifier = Modifier.fillMaxWidth())
 
                     Button(onClick = {
-                        val balance = openingBalance.toLongOrNull() ?: 0
+                        val balance = com.luxwallet.app.parser.core.AmountParser.normalizeOrNull(openingBalance) ?: return@Button
                         if (name.isNotBlank()) {
                             val kind = when (provider) {
                                 AccountProvider.BCA, AccountProvider.SEABANK -> AccountKind.BANK

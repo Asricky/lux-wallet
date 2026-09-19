@@ -16,7 +16,7 @@ class NotificationRepository(private val observationDao: NotificationObservation
     /** Returns null if an observation with the same raw payload hash already exists (exact re-delivery/update). */
     suspend fun insertIfNew(observation: NotificationObservationEntity): Long? {
         observationDao.findByHash(observation.rawPayloadHash)?.let { return null }
-        return observationDao.insert(observation)
+        return observationDao.insert(observation.copy(contentHash = com.luxwallet.app.engine.NotificationIdentity.hash(observation)))
     }
 
     suspend fun getPending(): List<NotificationObservationEntity> = observationDao.getByStatus(ParseStatus.PENDING)

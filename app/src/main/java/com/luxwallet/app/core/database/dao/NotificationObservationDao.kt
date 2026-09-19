@@ -22,6 +22,9 @@ interface NotificationObservationDao {
     @Query("SELECT * FROM notification_observations WHERE rawPayloadHash = :hash LIMIT 1")
     suspend fun findByHash(hash: String): NotificationObservationEntity?
 
+    @Query("SELECT * FROM notification_observations WHERE postedAt BETWEEN :fromTime AND :toTime AND linkedTransactionId IS NOT NULL ORDER BY postedAt ASC, id ASC")
+    suspend fun linkedInRange(fromTime: Long, toTime: Long): List<NotificationObservationEntity>
+
     @Query("SELECT * FROM notification_observations WHERE parseStatus = :status ORDER BY postedAt ASC")
     suspend fun getByStatus(status: ParseStatus): List<NotificationObservationEntity>
 
@@ -32,6 +35,6 @@ interface NotificationObservationDao {
     @Query("SELECT * FROM notification_observations ORDER BY postedAt DESC")
     fun observeAll(): Flow<List<NotificationObservationEntity>>
 
-    @Query("DELETE FROM notification_observations WHERE postedAt < :beforeTimestamp AND linkedTransactionId IS NOT NULL")
+    @Query("UPDATE notification_observations SET title = '', text = '', bigText = NULL, subText = NULL, textLines = NULL WHERE postedAt < :beforeTimestamp AND linkedTransactionId IS NOT NULL AND contentHash IS NOT NULL")
     suspend fun purgeProcessedOlderThan(beforeTimestamp: Long): Int
 }

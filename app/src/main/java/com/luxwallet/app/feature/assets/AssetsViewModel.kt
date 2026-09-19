@@ -38,11 +38,35 @@ private val INVESTMENT_CLASSES = setOf(
 class AssetsViewModel(
     private val accountRepository: AccountRepository,
     private val assetRepository: AssetRepository,
-    private val liabilityRepository: LiabilityRepository
+    private val liabilityRepository: LiabilityRepository,
+    private val transactionRepository: com.luxwallet.app.data.TransactionRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AssetsUiState())
     val uiState: StateFlow<AssetsUiState> = _uiState
+    val saving = MutableStateFlow(false)
+    val error = MutableStateFlow<String?>(null)
+
+    fun saveValue(accountId: Long?, asset: AssetEntity?, liability: LiabilityEntity?, name: String,
+                  assetClass: com.luxwallet.app.core.model.AssetClass, value: Long, onSaved: () -> Unit) {
+        if (saving.value) return
+        if (value < 0 || (accountId == null && name.isBlank())) { error.value = "Isi nama dan nominal yang valid."; return }
+        saving.value = true
+        error.value = null
+        viewModelScope.launch {
+            try {
+                when {
+                    accountId != null -> transactionRepository.setAccountBalance(accountId, value)
+                    liability != null -> liabilityRepository.upsert(liability.copy(name = name, currentOutstanding = value, updatedAt = System.currentTimeMillis()))
+                    else -> assetRepository.upsert(asset?.copy(name = name, assetClass = assetClass, currentValue = value, updatedAt = System.currentTimeMillis())
+                        ?: AssetEntity(name = name, assetClass = assetClass, currentValue = value, updatedAt = System.currentTimeMillis()))
+                }
+                onSaved()
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) { error.value = "Belum tersimpan. Periksa nominal dan coba lagi." }
+            finally { saving.value = false }
+        }
+    }
 
     init {
         viewModelScope.launch {
@@ -73,6 +97,6 @@ class AssetsViewModel(
     }
 
     companion object {
-        fun create(app: LuxWalletApp) = AssetsViewModel(app.accountRepository, app.assetRepository, app.liabilityRepository)
+        fun create(app: LuxWalletApp) = AssetsViewModel(app.accountRepository, app.assetRepository, app.liabilityRepository, app.transactionRepository)
     }
 }

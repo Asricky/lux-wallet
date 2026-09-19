@@ -69,7 +69,7 @@ fun DonutChart(
         }
         Box(contentAlignment = Alignment.Center) {
             androidx.compose.foundation.layout.Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(centerLabel, style = MaterialTheme.typography.titleLarge)
+                Text(centerLabel, style = MaterialTheme.typography.titleMedium)
                 Text(centerSubLabel, style = MaterialTheme.typography.bodyMedium)
             }
         }

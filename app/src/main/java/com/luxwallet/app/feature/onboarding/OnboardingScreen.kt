@@ -59,8 +59,8 @@ fun OnboardingScreen() {
 
     var incomeText by remember { mutableStateOf("") }
     var obligationsText by remember { mutableStateOf("") }
-    var savingsText by remember { mutableStateOf("") }
-    var investmentText by remember { mutableStateOf("") }
+    var savingsText by remember { mutableStateOf("1000000") }
+    var investmentText by remember { mutableStateOf("1500000") }
     var bufferText by remember { mutableStateOf("") }
 
     var goalName by remember { mutableStateOf("") }

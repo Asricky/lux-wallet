@@ -24,16 +24,17 @@ fun TransactionsScreen(onTransactionClick: (Long) -> Unit = {}) {
     val state by viewModel.uiState.collectAsState()
 
     Column(Modifier.fillMaxWidth().padding(16.dp)) {
+        Text("Riwayat transaksi", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(bottom = 18.dp))
         OutlinedTextField(
             value = state.query,
             onValueChange = viewModel::setQuery,
-            label = { Text("Search merchant or category") },
+            label = { Text("Cari merchant atau kategori") },
             modifier = Modifier.fillMaxWidth()
         )
 
         if (state.transactions.isEmpty() && !state.isLoading) {
             Text(
-                "No transactions yet. They will appear here automatically once notification access is on.",
+                "Belum ada transaksi. Catat manual atau aktifkan pemantauan notifikasi.",
                 Modifier.padding(top = 24.dp),
                 style = MaterialTheme.typography.bodyMedium
             )

@@ -1,145 +1,96 @@
-@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
-
 package com.luxwallet.app.feature.quickadd
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
-import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.luxwallet.app.core.common.AmountFormat
+import com.luxwallet.app.core.common.TransportPlan
+import com.luxwallet.app.core.ui.component.*
 import com.luxwallet.app.core.ui.luxViewModel
+import com.luxwallet.app.parser.core.AmountParser
 
-@Composable
-fun QuickAddScreen(onDone: () -> Unit = {}) {
+@Composable fun QuickAddScreen(onDone: () -> Unit = {}, onAccounts: () -> Unit = {}) {
     val viewModel = luxViewModel { QuickAddViewModel.create(it) }
     val options by viewModel.options.collectAsState()
     val saving by viewModel.saving.collectAsState()
-    val error by viewModel.error.collectAsState()
-
-    var kind by remember { mutableStateOf(QuickAddKind.EXPENSE) }
-    var amountText by remember { mutableStateOf("") }
-    var merchant by remember { mutableStateOf("") }
-    var note by remember { mutableStateOf("") }
-    var accountExpanded by remember { mutableStateOf(false) }
-    var destAccountExpanded by remember { mutableStateOf(false) }
-    var categoryExpanded by remember { mutableStateOf(false) }
-    var selectedAccountId by remember { mutableStateOf<Long?>(null) }
-    var selectedDestAccountId by remember { mutableStateOf<Long?>(null) }
-    var selectedCategoryId by remember { mutableStateOf<Long?>(null) }
-    var increasesBalance by remember { mutableStateOf(true) }
-
-    Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("Catat transaksi", style = androidx.compose.material3.MaterialTheme.typography.headlineMedium)
-        if (options.accounts.isEmpty()) Text("Tambahkan rekening melalui Pengaturan sebelum mencatat transaksi.")
-        SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-            QuickAddKind.entries.forEachIndexed { index, k ->
-                SegmentedButton(
-                    selected = kind == k,
-                    onClick = { kind = k },
-                    shape = SegmentedButtonDefaults.itemShape(index, QuickAddKind.entries.size)
-                ) { Text(k.name.replace('_', ' ')) }
+    val saveError by viewModel.error.collectAsState()
+    var kind by rememberSaveable { mutableStateOf(QuickAddKind.EXPENSE) }
+    var amount by rememberSaveable { mutableStateOf("") }
+    var accountId by rememberSaveable { mutableStateOf<Long?>(null) }
+    var destinationId by rememberSaveable { mutableStateOf<Long?>(null) }
+    var categoryId by rememberSaveable { mutableStateOf<Long?>(null) }
+    var merchant by rememberSaveable { mutableStateOf("") }
+    var note by rememberSaveable { mutableStateOf("") }
+    var increases by rememberSaveable { mutableStateOf(true) }
+    var reviewing by rememberSaveable { mutableStateOf(false) }
+    var error by rememberSaveable { mutableStateOf<String?>(null) }
+    val kinds = listOf("Pengeluaran", "Pemasukan", "Pindah saldo / top-up sendiri", "Koreksi saldo (+/−)")
+    val source = options.accounts.firstOrNull { it.id == accountId }
+    val destination = options.accounts.firstOrNull { it.id == destinationId }
+    val category = options.categories.firstOrNull { it.id == categoryId }
+    val parsed = AmountParser.normalizeOrNull(amount)
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).imePadding().padding(20.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+        Text(if (reviewing) "Periksa catatan" else "Catat transaksi", style = MaterialTheme.typography.headlineMedium)
+        Text(if (reviewing) "2 dari 2 · Konfirmasi" else "1 dari 2 · Detail transaksi", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        LinearProgressIndicator(progress = { if (reviewing) 1f else 0.5f }, modifier = Modifier.fillMaxWidth())
+        if (options.accounts.isEmpty()) {
+            Text("Buat rekening atau dompet tunai dulu agar transaksi punya sumber saldo.")
+            Button(onAccounts, Modifier.fillMaxWidth()) { Text("Tambah rekening") }
+        } else if (!reviewing) {
+            ChoiceField("Jenis catatan", kinds[kind.ordinal], kinds, { kind = QuickAddKind.entries[it]; error = null })
+            MoneyField("Nominal", amount, { amount = it; error = null })
+            ChoiceField(if (kind == QuickAddKind.TRANSFER) "Dari rekening" else "Rekening", source?.name ?: "Pilih rekening",
+                options.accounts.map { it.name }, { accountId = options.accounts[it].id; if (destinationId == accountId) destinationId = null })
+            if (kind == QuickAddKind.TRANSFER) {
+                val destinations = options.accounts.filter { it.id != accountId }
+                ChoiceField("Ke rekening / e-wallet sendiri", destination?.name ?: "Pilih tujuan", destinations.map { it.name }, { destinationId = destinations[it].id })
+                Text("Top-up berkala dicatat di sini. Saldo berpindah antar akunmu; bukan pengeluaran dan tidak mengurangi ruang belanja.", style = MaterialTheme.typography.bodySmall)
             }
-        }
-
-        OutlinedTextField(amountText, { amountText = it }, label = { Text("Nominal (Rp)") }, modifier = Modifier.fillMaxWidth())
-
-        AccountDropdown(
-            label = if (kind == QuickAddKind.TRANSFER) "Rekening asal" else "Rekening",
-            selectedId = selectedAccountId,
-            accounts = options.accounts,
-            expanded = accountExpanded,
-            onExpandedChange = { accountExpanded = it },
-            onSelect = { selectedAccountId = it }
-        )
-
-        if (kind == QuickAddKind.TRANSFER) {
-            AccountDropdown(
-                label = "Rekening tujuan",
-                selectedId = selectedDestAccountId,
-                accounts = options.accounts,
-                expanded = destAccountExpanded,
-                onExpandedChange = { destAccountExpanded = it },
-                onSelect = { selectedDestAccountId = it }
-            )
-        }
-
-        if (kind == QuickAddKind.EXPENSE || kind == QuickAddKind.INCOME) {
-            val selectedName = options.categories.firstOrNull { it.id == selectedCategoryId }?.name ?: "Pilih kategori"
-            ExposedDropdownMenuBox(expanded = categoryExpanded, onExpandedChange = { categoryExpanded = it }) {
-                TextField(
-                    value = selectedName, onValueChange = {}, readOnly = true,
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
-                    modifier = Modifier.fillMaxWidth().menuAnchor()
-                )
-                ExposedDropdownMenu(expanded = categoryExpanded, onDismissRequest = { categoryExpanded = false }) {
-                    options.categories.forEach { c ->
-                        DropdownMenuItem(text = { Text(c.name) }, onClick = { selectedCategoryId = c.id; categoryExpanded = false })
-                    }
+            if (kind == QuickAddKind.EXPENSE || kind == QuickAddKind.INCOME) {
+                ChoiceField("Kategori", category?.name ?: "Pilih kategori", options.categories.map { it.name }, { categoryId = options.categories[it].id })
+                if (kind == QuickAddKind.EXPENSE) {
+                    FilterChip(selected = category?.name == TransportPlan.CATEGORY, onClick = {
+                        categoryId = options.categories.firstOrNull { it.name == TransportPlan.CATEGORY }?.id
+                    }, label = { Text("Transportasi rutin · di luar uang belanja bebas") })
                 }
+                OutlinedTextField(merchant, { merchant = it }, Modifier.fillMaxWidth(), label = { Text("Merchant / keterangan (opsional)") }, singleLine = true)
             }
-            OutlinedTextField(merchant, { merchant = it }, label = { Text("Merchant (opsional)") }, modifier = Modifier.fillMaxWidth())
-        }
-
-        if (kind == QuickAddKind.BALANCE_ADJUSTMENT) {
-            Text("Menambah saldo")
-            Switch(checked = increasesBalance, onCheckedChange = { increasesBalance = it })
-        }
-
-        OutlinedTextField(note, { note = it }, label = { Text("Catatan (opsional)") }, modifier = Modifier.fillMaxWidth())
-
-        error?.let { Text(it, color = androidx.compose.material3.MaterialTheme.colorScheme.error) }
-        Button(enabled = !saving && selectedAccountId != null, onClick = {
-            val amount = com.luxwallet.app.parser.core.AmountParser.normalizeOrNull(amountText) ?: 0L
-            val accountId = selectedAccountId ?: return@Button
-            viewModel.submit(
-                kind = kind, amount = amount, accountId = accountId, destinationAccountId = selectedDestAccountId,
-                categoryId = selectedCategoryId, merchantName = merchant.ifBlank { null }, note = note.ifBlank { null },
-                adjustmentIncreasesBalance = increasesBalance, onSaved = onDone
-            )
-        }) { Text(if (saving) "Menyimpan…" else "Simpan transaksi") }
-    }
-}
-
-@Composable
-private fun AccountDropdown(
-    label: String,
-    selectedId: Long?,
-    accounts: List<com.luxwallet.app.core.database.entity.AccountEntity>,
-    expanded: Boolean,
-    onExpandedChange: (Boolean) -> Unit,
-    onSelect: (Long) -> Unit
-) {
-    val selectedName = accounts.firstOrNull { it.id == selectedId }?.name ?: "Pilih rekening"
-    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = onExpandedChange) {
-        TextField(
-            value = selectedName, onValueChange = {}, readOnly = true, label = { Text(label) },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier.fillMaxWidth().menuAnchor()
-        )
-        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { onExpandedChange(false) }) {
-            accounts.forEach { a ->
-                DropdownMenuItem(text = { Text(a.name) }, onClick = { onSelect(a.id); onExpandedChange(false) })
-            }
+            if (kind == QuickAddKind.BALANCE_ADJUSTMENT) ChoiceField("Arah koreksi", if (increases) "Menambah saldo" else "Mengurangi saldo",
+                listOf("Menambah saldo", "Mengurangi saldo"), { increases = it == 0 })
+            OutlinedTextField(note, { note = it }, Modifier.fillMaxWidth(), label = { Text("Catatan tambahan (opsional)") })
+            error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            Button(onClick = {
+                error = when {
+                    parsed == null || parsed <= 0 -> "Isi nominal rupiah yang valid dan lebih dari nol."
+                    source == null -> "Pilih rekening sumber."
+                    kind == QuickAddKind.TRANSFER && (destination == null || destinationId == accountId) -> "Pilih rekening tujuan yang berbeda."
+                    (kind == QuickAddKind.EXPENSE || kind == QuickAddKind.INCOME) && category == null -> "Pilih kategori agar catatanmu rapi."
+                    else -> null
+                }
+                if (error == null) reviewing = true
+            }, modifier = Modifier.fillMaxWidth()) { Text("Lanjut ke ringkasan") }
+        } else {
+            Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(22.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(kinds[kind.ordinal], style = MaterialTheme.typography.titleMedium)
+                Text(AmountFormat.rupiah(parsed ?: 0), style = MaterialTheme.typography.headlineLarge)
+                Text("Rekening: ${source?.name ?: "Tidak tersedia"}")
+                if (kind == QuickAddKind.TRANSFER) Text("Tujuan: ${destination?.name ?: "Tidak tersedia"}")
+                else if (category != null) Text("Kategori: ${category.name}")
+                if (merchant.isNotBlank()) Text(merchant)
+                if (note.isNotBlank()) Text(note)
+                Text("Tanggal: hari ini", style = MaterialTheme.typography.bodySmall)
+            } }
+            saveError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            Button(enabled = !saving && source != null && parsed != null && parsed > 0, modifier = Modifier.fillMaxWidth(), onClick = {
+                viewModel.submit(kind, parsed ?: 0, source!!.id, destinationId, categoryId,
+                    merchant.ifBlank { null }, note.ifBlank { null }, increases, onDone)
+            }) { Text(if (saving) "Menyimpan…" else "Simpan transaksi") }
+            OutlinedButton(enabled = !saving, onClick = { reviewing = false }, modifier = Modifier.fillMaxWidth()) { Text("Kembali & ubah") }
         }
     }
 }
