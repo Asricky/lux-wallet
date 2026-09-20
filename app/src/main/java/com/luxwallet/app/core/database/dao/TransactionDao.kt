@@ -10,6 +10,9 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TransactionDao {
+    @Query("SELECT COALESCE(MAX(id), 0) FROM transactions")
+    suspend fun lastId(): Long
+
     @Insert
     suspend fun insert(transaction: TransactionEntity): Long
 

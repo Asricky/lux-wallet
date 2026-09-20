@@ -23,7 +23,12 @@ import com.luxwallet.app.feature.transactions.TransactionsScreen
 
 @Composable
 fun LuxNavGraph(navController: NavHostController, startDestination: String = LuxDestinations.HOME) {
-    NavHost(navController = navController, startDestination = startDestination) {
+    NavHost(navController = navController, startDestination = startDestination,
+        enterTransition = { androidx.compose.animation.EnterTransition.None },
+        exitTransition = { androidx.compose.animation.ExitTransition.None },
+        popEnterTransition = { androidx.compose.animation.EnterTransition.None },
+        popExitTransition = { androidx.compose.animation.ExitTransition.None }) {
+        composable(LuxDestinations.ALERT_SETTINGS) { com.luxwallet.app.feature.settings.AlertSettingsScreen() }
         composable(LuxDestinations.HOME) { HomeScreen(onNavigate = { navController.openScreen(it) }) }
         composable(LuxDestinations.CALENDAR) { com.luxwallet.app.feature.calendar.CalendarScreen(onNavigate = { navController.openScreen(it) }) }
         composable(LuxDestinations.PLANNER) { com.luxwallet.app.feature.planner.PlannerScreen() }
@@ -59,6 +64,7 @@ fun LuxNavGraph(navController: NavHostController, startDestination: String = Lux
         composable(LuxDestinations.NOTIFICATION_LAB) { NotificationLabScreen() }
         composable(LuxDestinations.SETTINGS) {
             SettingsScreen(
+                onOpenNotifications = { navController.openScreen(LuxDestinations.ALERT_SETTINGS) },
                 onOpenCoach = { navController.openScreen(LuxDestinations.COACH) },
                 onOpenAccounts = { navController.openScreen(LuxDestinations.ACCOUNTS) },
                 onOpenCategories = { navController.openScreen(LuxDestinations.CATEGORIES) },

@@ -44,6 +44,7 @@ import com.luxwallet.app.core.ui.luxViewModel
 fun CashflowScreen() {
     val viewModel = luxViewModel { CashflowViewModel.create(it) }
     val state by viewModel.uiState.collectAsState()
+    val hidden = com.luxwallet.app.core.common.LocalAmountsHidden.current
 
     LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item {
@@ -72,9 +73,9 @@ fun CashflowScreen() {
 
         item {
             Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                DonutChart(
+                if (hidden) Text("********", style = MaterialTheme.typography.headlineLarge) else DonutChart(
                     slices = state.categories.map { DonutSlice(it.name, it.amount.toDouble(), it.color) },
-                    centerLabel = AmountFormat.rupiah(state.total),
+                    centerLabel = com.luxwallet.app.core.common.privateRupiah(state.total),
                     centerSubLabel = if (state.tab == CashflowTab.EXPENSE) "Total Pengeluaran" else "Total Pemasukan"
                 )
             }
@@ -89,15 +90,15 @@ fun CashflowScreen() {
                 ) {
                     Column {
                         Text(slice.name, style = MaterialTheme.typography.bodyLarge)
-                        Text("${slice.percent}%", style = MaterialTheme.typography.bodyMedium)
+                        Text(if (hidden) "Proporsi disembunyikan" else "${slice.percent}%", style = MaterialTheme.typography.bodyMedium)
                     }
-                    Text(AmountFormat.rupiah(slice.amount), style = MaterialTheme.typography.bodyLarge)
+                    Text(com.luxwallet.app.core.common.privateRupiah(slice.amount), style = MaterialTheme.typography.bodyLarge)
                 }
             }
         }
 
         if (state.categories.isEmpty() && !state.isLoading) {
-            item { Text("No transactions this month yet.", style = MaterialTheme.typography.bodyMedium) }
+            item { Text("Belum ada transaksi bulan ini.", style = MaterialTheme.typography.bodyMedium) }
         }
     }
 }

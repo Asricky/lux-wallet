@@ -16,6 +16,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.luxwallet.app.LuxWalletApp
 import com.luxwallet.app.core.common.AmountFormat
 import com.luxwallet.app.core.common.CashflowMath
@@ -43,7 +44,7 @@ import java.util.Locale
     val zone = ZoneId.systemDefault()
     val eligible = remember(state.transactions) { CashflowMath.cashflowEligible(state.transactions) }
     val grouped = remember(eligible) { eligible.groupBy { Instant.ofEpochMilli(it.transactionTime).atZone(zone).toLocalDate() } }
-    fun money(value: Long) = if (hidden) "Rp ••••••" else AmountFormat.rupiah(value)
+    fun money(value: Long) = if (hidden) "********" else AmountFormat.rupiah(value)
     fun changeMonth(value: YearMonth) { monthText = value.toString(); selectedDay = value.atDay(1).toEpochDay() }
     LazyColumn(contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 96.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item { Text("Kalender keuangan", style = MaterialTheme.typography.headlineSmall) }
@@ -76,25 +77,18 @@ import java.util.Locale
                             if (day !in 1..month.lengthOfMonth()) Spacer(Modifier.weight(1f).heightIn(min = 56.dp))
                             else {
                                 val date = month.atDay(day)
-                                val plan = PaydayPlan.forDay(state.plans, date)
-                                val status = plan?.let { PaydayMath.status(it, state.transactions, state.transportIds, state.billIds, date, zone) }
-                                val marker = when {
-                                    date > state.today -> "·"
-                                    status == null -> "—"
-                                    status.dailyBudget - status.spentToday < 0 -> "−"
-                                    else -> "+"
-                                }
-                                val color = when {
-                                    date == selected -> MaterialTheme.colorScheme.primaryContainer
-                                    !hidden && marker == "−" -> MaterialTheme.colorScheme.errorContainer
-                                    !hidden && marker == "+" -> MaterialTheme.colorScheme.secondaryContainer
-                                    else -> MaterialTheme.colorScheme.surface
-                                }
+                                val transactions = grouped[date].orEmpty()
+                                val net = CashflowMath.totalIncome(transactions) - CashflowMath.totalExpense(transactions)
+                                val marker = if (hidden) "••" else com.luxwallet.app.core.common.compactCashflow(net)
+                                val color = if (date == selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
+                                val ink = if (hidden || net == 0L) MaterialTheme.colorScheme.onSurfaceVariant
+                                    else if (net > 0) com.luxwallet.app.core.ui.theme.LocalLuxSemanticColors.current.income
+                                    else com.luxwallet.app.core.ui.theme.LocalLuxSemanticColors.current.expense
                                 Surface(onClick = { selectedDay = date.toEpochDay() }, shape = RoundedCornerShape(10.dp), color = color,
                                     modifier = Modifier.weight(1f).heightIn(min = 56.dp).semantics { contentDescription = date.format(planDateFormat) }) {
                                     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(vertical = 6.dp)) {
                                         Text(day.toString(), style = MaterialTheme.typography.bodyMedium)
-                                        Text(if (hidden) "·" else marker, style = MaterialTheme.typography.labelSmall)
+                                        Text(marker, style = MaterialTheme.typography.labelSmall, color = ink, maxLines = 1, fontSize = 9.sp)
                                     }
                                 }
                             }
@@ -103,7 +97,7 @@ import java.util.Locale
                 }
             }
         }
-        item { Text("+ Dalam budget   − Melebihi budget   — Belum ada rencana", style = MaterialTheme.typography.bodySmall) }
+        item { Text("Angka harian = pemasukan − pengeluaran. K = ribu · M = juta. Budget tersedia di rincian tanggal.", style = MaterialTheme.typography.bodySmall) }
         item {
             val txs = grouped[selected].orEmpty()
             val plan = PaydayPlan.forDay(state.plans, selected)
@@ -118,6 +112,8 @@ import java.util.Locale
                     selected > state.today -> Text("Hari mendatang · belum ada hasil aktual.")
                     status == null -> Text("Belum ada target budget tersimpan untuk hari ini. Selisih arus kas bukan surplus budget.")
                     else -> {
+                        com.luxwallet.app.core.ui.component.Lumi(
+                            com.luxwallet.app.core.ui.component.budgetMood(status.usedPercent, selected < state.today && status.dailyBudget > 0), Modifier.size(64.dp))
                         val delta = status.dailyBudget - status.spentToday
                         Text("Budget bebas: ${money(status.dailyBudget)}")
                         Text("Pemakaian budget: ${money(status.spentToday)}")

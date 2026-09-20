@@ -23,6 +23,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 /**
  * Simple hand-rolled DI container (PRD §54.2: "prefer simple deterministic implementations") —
@@ -34,7 +35,7 @@ class LuxWalletApp : Application(), Configuration.Provider {
 
     val database: LuxDatabase by lazy {
         Room.databaseBuilder(this, LuxDatabase::class.java, LuxDatabase.DATABASE_NAME)
-            .addMigrations(LuxDatabase.MIGRATION_1_2, LuxDatabase.MIGRATION_2_3)
+            .addMigrations(LuxDatabase.MIGRATION_1_2, LuxDatabase.MIGRATION_2_3, LuxDatabase.MIGRATION_3_4)
             .build()
     }
 
@@ -69,6 +70,12 @@ class LuxWalletApp : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+        com.luxwallet.app.notification.TransactionNotifications.createChannel(this)
+        applicationScope.launch {
+            database.transactionConfirmationDao().nextDue().distinctUntilChanged().collect { due ->
+                if (due != null) com.luxwallet.app.notification.TransactionNotifications.schedule(this@LuxWalletApp, due)
+            }
+        }
         applicationScope.launch {
             preferences.coachEnabled.collect { com.luxwallet.app.notification.CoachNotifications.configure(this@LuxWalletApp, it) }
         }

@@ -39,16 +39,28 @@ import kotlinx.coroutines.launch
     LaunchedEffect(iconMode, lumiMood(status), planState.loaded) {
         if (iconMode == "AUTO" && planState.loaded) runCatching { LumiLauncher.apply(app, lumiMood(status)) }
     }
+    val profileName by app.preferences.profileName.collectAsState(initial = "")
+    val mood = remember(status, planState.transactions) {
+        val latest = com.luxwallet.app.core.common.CashflowMath.cashflowEligible(planState.transactions).maxByOrNull { it.createdAt }
+        val recent = latest != null && System.currentTimeMillis() - latest.createdAt in 0..3_600_000L
+        val expenses = com.luxwallet.app.core.common.CashflowMath.cashflowEligible(planState.transactions)
+            .filter { it.direction == com.luxwallet.app.core.model.TransactionDirection.OUT && it.id != latest?.id &&
+                System.currentTimeMillis() - it.transactionTime in 0..604_800_000L }
+        val spike = recent && latest?.direction == com.luxwallet.app.core.model.TransactionDirection.OUT &&
+            expenses.size >= 3 && latest.amount > expenses.map { it.amount }.average() * 3
+        companionMood(status,
+            planState.transactions.any { it.reviewStatus == com.luxwallet.app.core.model.ReviewStatus.NEEDS_REVIEW },
+            spike, recent && latest?.direction == com.luxwallet.app.core.model.TransactionDirection.IN && !latest.isInternalTransfer && !latest.isExcludedFromCashflow)
+    }
     val scope = rememberCoroutineScope()
     var showInfo by remember { mutableStateOf(false) }
-    fun money(amount: Long) = if (hidden) "Rp ••••••" else AmountFormat.rupiah(amount)
+    fun money(amount: Long) = if (hidden) "********" else AmountFormat.rupiah(amount)
     LazyColumn(contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 96.dp), verticalArrangement = Arrangement.spacedBy(22.dp)) {
         item {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Lumi(lumiMood(status), Modifier.size(52.dp))
                 Column(Modifier.weight(1f).padding(start = 10.dp)) {
-                    Text("LUX WALLET", style = MaterialTheme.typography.titleMedium)
-                    Text("Selamat datang kembali", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(com.luxwallet.app.core.common.greeting(profileName), style = MaterialTheme.typography.titleLarge)
+                    Text("Yuk, lihat kabar uangmu hari ini.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 NotificationIndicator { onNavigate(LuxDestinations.NOTIFICATION_SETTINGS) }
                 IconButton({ onNavigate(LuxDestinations.SETTINGS) }) { Icon(Icons.Outlined.Settings, "Pengaturan") }
@@ -56,7 +68,7 @@ import kotlinx.coroutines.launch
         }
         item {
             Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
-                Row(Modifier.fillMaxWidth().background(Brush.horizontalGradient(listOf(Color(0xFF35382F), LuxInk))).padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(Modifier.fillMaxWidth().background(Brush.horizontalGradient(listOf(Color(0xFF087A78), Color(0xFF16324F)))).padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Outlined.AccountBalanceWallet, null, tint = LuxGold)
                     Text("  Kekayaan bersih", color = Color.White, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
                     IconButton({ scope.launch { app.preferences.setAmountsHidden(!hidden) } }) {
@@ -67,7 +79,7 @@ import kotlinx.coroutines.launch
                     Text(if (state.isLoading) "Memuat…" else money(state.netWorth), style = MaterialTheme.typography.headlineLarge)
                     Text("Total aset − kewajiban", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     HorizontalDivider(Modifier.padding(top = 8.dp))
-                    TextButton({ onNavigate(LuxDestinations.ASSETS) }, contentPadding = PaddingValues(0.dp)) { Text("Lihat & atur aset  →") }
+                    TextButton({ onNavigate(LuxDestinations.ASSETS) }, contentPadding = PaddingValues(0.dp)) { Text("Lihat & atur aset"); Icon(Icons.Outlined.ChevronRight, null, Modifier.size(18.dp)) }
                 }
             }
         }
@@ -87,14 +99,18 @@ import kotlinx.coroutines.launch
                         IconButton({ showInfo = true }) { Icon(Icons.Outlined.Info, "Cara menghitung ruang belanja") }
                     }
                     if (status == null || status.expired) {
+                        Lumi(mood, Modifier.size(64.dp))
                         Text(if (status == null) "Konfirmasi saldo yang tersedia" else "Waktunya memperbarui rencana", style = MaterialTheme.typography.titleLarge)
                         Text("Atur kebutuhan sampai pemasukan tanggal 25 atau 1. Uang yang belum diterima belum bisa dibelanjakan.")
                     } else {
-                        Text(money(status.remainingToday.coerceAtLeast(0)), style = MaterialTheme.typography.headlineMedium)
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            Text(money(status.remainingToday.coerceAtLeast(0)), Modifier.weight(1f), style = MaterialTheme.typography.headlineMedium)
+                            Lumi(mood, Modifier.size(72.dp))
+                        }
                         Text("Sampai ${status.plan.end.format(com.luxwallet.app.feature.planner.planDateFormat)}", style = MaterialTheme.typography.bodySmall)
-                        LinearProgressIndicator(progress = { (status.usedPercent / 100).toFloat().coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth(),
+                        if (!hidden) LinearProgressIndicator(progress = { (status.usedPercent / 100).toFloat().coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth(),
                             color = if (status.remainingToday < 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
-                        Text(if (hidden) "Penggunaan disembunyikan" else "${status.usedPercent.toInt()}% terpakai · ${money(status.spentToday)} dari ${money(status.dailyBudget)}", style = MaterialTheme.typography.bodySmall)
+                        Text(if (hidden) "Penggunaan disembunyikan" else if (status.dailyBudget <= 0 && status.spentToday > 0) "Belanja tanpa budget tersedia · ${money(status.spentToday)}" else "${status.usedPercent.toInt()}% terpakai · ${money(status.spentToday)} dari ${money(status.dailyBudget)}", style = MaterialTheme.typography.bodySmall)
                         if (status.freeRemaining < 0) Text("Alokasi melebihi dana tersedia. Tinjau rencana sebelum belanja.", color = MaterialTheme.colorScheme.error)
                     }
                     TextButton({ onNavigate(LuxDestinations.PLANNER) }) { Text("Atur rencana sampai gajian") }
@@ -105,8 +121,14 @@ import kotlinx.coroutines.launch
             val advice = com.luxwallet.app.engine.MoneyCoach.advise(status, planState.today)
             OutlinedCard(onClick = { onNavigate(LuxDestinations.COACH) }, modifier = Modifier.fillMaxWidth()) {
                 Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Lumi(lumiMood(status), Modifier.size(60.dp))
-                    Column(Modifier.weight(1f)) { Text("Saran Lumi", style = MaterialTheme.typography.labelMedium); Text(advice.title, style = MaterialTheme.typography.titleMedium) }
+                    Column(Modifier.weight(1f)) { Text("Saran Lumi", style = MaterialTheme.typography.labelMedium); Text(when(mood) {
+                        LumiMood.CURIOUS -> "Ada transaksi yang perlu kamu cek"
+                        LumiMood.SHOCKED -> "Transaksi terakhir lebih besar dari biasanya"
+                        LumiMood.EXCITED -> "Pemasukan baru sudah tercatat"
+                        LumiMood.NERVOUS -> if ((status?.usedPercent ?: 0.0) >= 90) "Budget hampir habis, dahulukan kebutuhan utama" else "Budget mulai menipis, cek sebelum belanja lagi"
+                        else -> advice.title
+                    }, style = MaterialTheme.typography.titleMedium)
+                        if (status != null && !status.expired) Text(if (hidden) "Rencana harianmu tersimpan" else "${status.usedPercent.toInt()}% budget terpakai · sisa ${money(status.remainingToday.coerceAtLeast(0))}", style = MaterialTheme.typography.bodySmall) }
                     Icon(Icons.Outlined.ChevronRight, "Buka saran Lumi")
                 }
             }

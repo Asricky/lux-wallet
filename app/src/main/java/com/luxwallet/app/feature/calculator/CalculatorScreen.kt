@@ -63,9 +63,9 @@ import com.luxwallet.app.parser.core.AmountParser
             if (projection != null) Card(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text("Simulasi nilai akhir", style = MaterialTheme.typography.titleMedium)
-                    Text(AmountFormat.rupiah(projection.futureValue.toLong()), style = MaterialTheme.typography.headlineMedium)
-                    Text("Total setoran: ${AmountFormat.rupiah(projection.principal.toLong())}")
-                    Text("Pertumbuhan: ${AmountFormat.rupiah((projection.futureValue - projection.principal).toLong())}")
+                    Text(com.luxwallet.app.core.common.privateRupiah(projection.futureValue.toLong()), style = MaterialTheme.typography.headlineMedium)
+                    Text("Total setoran: ${com.luxwallet.app.core.common.privateRupiah(projection.principal.toLong())}")
+                    Text("Pertumbuhan: ${com.luxwallet.app.core.common.privateRupiah((projection.futureValue - projection.principal).toLong())}")
                 }
             } else Text("Isi nilai yang valid: durasi 1–60 tahun dan hasil −99% hingga 100%.")
             Text("Simulasi, bukan janji hasil. Angka 6% hanya contoh; pajak, biaya, dan inflasi belum dimasukkan. Hasil investasi dapat turun. Perhitungan mengasumsikan hasil diinvestasikan kembali.", style = MaterialTheme.typography.bodySmall)

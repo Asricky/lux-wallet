@@ -1,100 +1,82 @@
 # Lux Wallet — Panduan desain
 
-Revisi 19 September 2026 · Berlaku sejak v3. Spesifikasi perilaku dan perhitungan ada di [PRD.md](PRD.md).
+Revisi 20 September 2026 · v4. Perhitungan dan perilaku: [PRD.md](PRD.md).
 
-## Karakter produk
+## Arah produk
 
-Tenang, jelas, dan dekat dengan keseharian. Utamakan saldo, tindakan berikutnya, serta penjelasan angka. Referensi aplikasi perbankan digunakan untuk pola interaksi yang familiar, bukan menyalin logo, ilustrasi, data rekening, atau susunan produknya.
-
-Lumi memberi konteks dan semangat secukupnya. Aplikasi harus tetap terasa sebagai alat keuangan yang dapat dipercaya.
+Aplikasi keuangan personal yang tenang, ringkas, dan ramah. Dahulukan nominal yang mudah dibaca, keadaan uang sebenarnya, serta satu tindakan yang jelas. Pola bank/dompet digital menjadi referensi interaksi familiar; identitas Lux Wallet tetap mengikuti Lumi milik produk.
 
 ## Identitas Lumi
 
-<p><img src="docs/brand/lumi-calm.svg" width="140" alt="Lumi tenang" /> <img src="docs/brand/lumi-happy.svg" width="140" alt="Lumi senang" /> <img src="docs/brand/lumi-focus.svg" width="140" alt="Lumi fokus" /></p>
+<img src="app/src/main/res/drawable-nodpi/lumi_emotions.png" width="540" alt="Sembilan ekspresi Lumi" />
 
-Penguin dengan siluet membulat, bulu hitam kebiruan, wajah/perut krem, paruh dan kaki emas, serta dompet kecil di dada. Mata dan alis membedakan ekspresi; siluet utama tidak berubah.
+Lumi: burung membulat teal, jambul daun, wajah/perut krem, huruf L dan kaki emas, material lembut tiga dimensi. Referensi asli pemilik: [Lumi-mascot.png](Lumi-mascot.png). Atlas transparan berada di `drawable-nodpi/lumi_emotions.png`, sembilan sel persegi sama besar. Urutan baris: Happy/Proud/Calm, Excited/Curious/Nervous, Shocked/Sad/Angry. Komponen `Lumi` mengambil wilayah atlas saat menggambar; teks kondisi tetap menjadi komponen native.
 
-| Ekspresi | Penggunaan |
+| Ekspresi | Bukti pemicu |
 | --- | --- |
-| Tenang | Ikon bawaan, sambutan, belum ada rencana |
-| Senang | Rencana aktif dengan ruang uang yang cukup |
-| Fokus | Budget/pendanaan perlu ditinjau atau rencana berakhir |
+| Happy | Pemakaian budget 0–50% |
+| Calm | Belum ada rencana aktif atau penggunaan normal >50–<75% |
+| Nervous | Budget 75–100%; angka persen memperjelas kedekatan ke batas |
+| Sad | Budget >100–120% |
+| Angry | Budget >120% atau kekurangan dana bebas; bahasa tetap suportif |
+| Curious | Ada transaksi berstatus perlu ditinjau |
+| Shocked | Pengeluaran terbaru >3× rata-rata minimal tiga catatan tujuh hari sebelumnya |
+| Excited | Pemasukan nyata baru tercatat, bukan pindah saldo/penyesuaian |
+| Proud | Hari yang sudah selesai dengan rencana dan pemakaian <75% |
 
-Jangan menambahkan hukuman visual, tangisan berlebihan, ancaman kehilangan streak, atau ungkapan menyalahkan pengguna. Kondisi finansial adalah informasi, bukan nilai moral.
+Risiko budget mendahului ekspresi peristiwa. Tidak mengarang pencapaian/angka. Sisa anggaran tidak dicatat menjadi pendapatan. Maksimal satu Lumi utama per layar; ukuran 64–100 dp untuk pendamping informasi, 140 dp untuk onboarding. Jangan tampilkan avatar kosong atau hukuman visual.
 
-Aset sumber: `docs/brand/lumi-*.svg`. Aset Android: `drawable/ic_launcher_foreground.xml`, `drawable/lumi_happy.xml`, `drawable/lumi_focus.xml`. Ketiganya memakai viewport 108 × 108; wajah dan ciri utama harus aman pada crop ikon lingkaran maupun squircle. Gunakan vektor untuk menghindari blur.
-
-Ikon Android merupakan adaptive icon dengan lapisan background emas dan foreground Lumi. Pilihan ekspresi menggunakan activity aliases. Mode mengikuti rencana adalah pilihan pengguna; update ekspresi saat aplikasi dibuka. Nama launcher tetap **Lux Wallet**.
+Launcher memakai tiga foreground transparan `lumi_launcher*.png`, latar aqua, safe zone adaptive icon. Alias lama dipertahankan agar upgrade tetap bisa diluncurkan. Mode otomatis memetakan ekspresi ke tenang/senang/fokus saat aplikasi dibuka, bukan mengubah ikon terus-menerus di latar belakang. Nama launcher tetap Lux Wallet. Aset vektor lama di docs/brand adalah arsip v3, bukan acuan desain baru.
 
 ## Warna
 
-| Token | Terang | Gelap | Kegunaan |
-| --- | --- | --- | --- |
-| Background | `#F6F4EF` | `#101110` | Latar utama |
-| Surface | `#FFFDF8` | `#191A18` | Form, panel, kartu penting |
-| Primary | `#76571D` | `#D8B66A` | Aksi, pilihan aktif |
-| Teks utama | `#141413` | `#F5F1E8` | Nominal dan judul |
-| Teks sekunder | `#656057` | `#BBB7AC` | Keterangan |
-| Garis halus | `#DED8CB` | `#393A33` | Pemisah |
-| Latar ikon Lumi | `#E9C77F` | `#E9C77F` | Launcher saja |
+| Token | Nilai | Peran |
+| --- | --- | --- |
+| Teal | #16B8B2 | Identitas Lumi/aksen |
+| Deep teal | #087A78 | Aksi/teks aktif tema terang dengan kontras memadai |
+| Aqua / mint | #DDF8F6 / #EAFBF7 | Container dan latar ikon |
+| Gold / light gold | #F5B942 / #FFF2C9 | Aksen kecil, pencapaian |
+| Teks | #16324F / #64748B | Primer / sekunder |
+| Background / surface | #F7FAFC / #FFFFFF | Tema terang |
+| Background / surface gelap | #0D1A22 / #142731 | Tema gelap |
+| Primary gelap | #4FD1C5 | Aksi dengan kontras di latar gelap |
+| Positive / warning / danger / info | #22C55E / #F59E0B / #EF4444 / #3B82F6 | Arah warna semantik; teks memakai varian lebih gelap/terang agar terbaca |
 
-Gunakan warna semantik Material untuk error dan container; selalu sertai status dengan teks/simbol. Emas sebagai aksen, bukan warna seluruh halaman. Hindari gradasi berulang, efek glow, bayangan besar, dan deretan kartu yang semuanya tampak sama penting.
+Gunakan token Theme dan SemanticColors, jangan menaruh warna baru per halaman tanpa alasan. Gradasi hanya pada hero/aksen penting. Grafik, kartu, dan form tetap sederhana. Status harus mempunyai label/simbol selain warna.
 
-## Tipografi dan jarak
+## Komponen
 
-- Gunakan keluarga sistem yang ditetapkan di `core/ui/theme/Type.kt`; jangan menambah font dekoratif.
-- Nominal utama: headlineLarge/headlineMedium. Judul halaman: headlineSmall atau app bar. Judul seksi: titleMedium/titleLarge. Keterangan: bodySmall, bukan teks sangat kecil.
-- Satu judul utama per layar. Step form menjelaskan tahap, tidak mengulang nama aplikasi.
-- Margin ponsel 16–20 dp; jarak antarseksi 16–24 dp; isi kartu 16–20 dp.
-- Radius field 16 dp; kartu 20 dp; dialog/sheet mengikuti Material. Tidak semua baris perlu dibungkus kartu.
-- Target sentuh minimal 48 dp untuk aksi utama. Kalender menggunakan sel minimal 56 dp tinggi dan tujuh kolom.
-- Konten utama menyediakan ruang bawah bagi tombol catat agar baris terakhir tetap terbaca dan dapat disentuh.
-- Hindari ukuran tetap untuk paragraf. Teks panjang dan skala font perangkat harus dapat membungkus.
+- Spasi 4/8/12/16/20/24/32 dp. Margin ponsel 16–20 dp. Kartu radius 20–28 dp, field 16 dp. Target sentuh tindakan minimal 48 dp.
+- Tipografi sistem di `Type.kt`. Headline untuk nominal utama, title untuk judul, body untuk keterangan. Hindari banyak bobot/ukuran bersaing.
+- CTA navigasi memakai chevron Material 18–24 dp, terpusat vertikal, berjarak dari teks. Jangan memakai panah literal sebagai hiasan tombol.
+- Pemilih `ChoiceField` membuka bottom sheet yang bisa digulir; tutup fokus keyboard dahulu, checkmark pilihan aktif.
+- Rupiah `MoneyField`: digit integer dalam model, titik ribuan visual, kursor/hapus/paste tetap benar. Tampilan laporan memakai `privateRupiah` atau `visibleAmount`.
+- Mode hide memakai `********` rapat, menutup nominal, proporsi grafik, dan warna finansial kalender. Input serta ringkasan draft tetap terbaca karena pengguna sedang memverifikasi data sebelum simpan.
+- Simpan hanya menutup form setelah database berhasil. Draft dipertahankan saat gagal. Back pada ringkasan kembali mengedit; keluar draft yang berubah meminta pilihan lanjut/buang.
+- Lonceng kecil Beranda menunjukkan koneksi listener, bukan izin mengirim konfirmasi. Animasi lembut; label aksesibilitas harus tetap menjelaskan status tanpa animasi.
 
-## Navigasi
+## Navigasi dan performa
 
-Empat tab berlabel: **Beranda · Kalender · Aset · Lainnya**. Ikon outline, satu indikator aktif, tanpa tombol tengah yang menyamar sebagai tab. Pada lebar ≥600 dp gunakan navigation rail.
+Empat tab: Beranda, Kalender, Aset, Lainnya. Bilah bawah di ponsel; rail pada lebar ≥600 dp. Tombol catat adalah aksi, bukan tab kelima. Halaman detail punya app bar dan panah kembali; toolbar dan Back sistem memakai dispatcher yang sama.
 
-Catat adalah floating action button pada Beranda, Kalender, dan Aset. Halaman detail/form punya panah kembali dan tidak menampilkan tab utama. Tombol kembali sistem dan toolbar memakai dispatcher yang sama.
+`openScreen` menyimpan state akar tab (`saveState`, `restoreState`, `launchSingleTop`) setelah membuang halaman detail. Tab memulihkan pilihan dan posisi gulir, tidak membuka formulir lama. NavHost tidak memakai fade. State finansial berasal dari Flow/ViewModel, bukan salinan lokal yang dimuat ulang setiap klik. Kalender mengelompokkan transaksi sekali untuk seluruh bulan.
 
-Memilih tab membuka akar menu. Jangan memulihkan formulir lama ketika pengguna memilih tab utama. Back pada tab selain Beranda kembali ke Beranda; Back di Beranda mengikuti sistem.
+Referensi implementasi: [Android multiple back stacks](https://developer.android.com/guide/navigation/backstack/multi-back-stacks).
 
-## Komponen dan interaksi
+## Kalender dan budget
 
-**Nominal.** Gunakan `MoneyField`: prefiks Rp, keyboard angka, pemisah ribuan otomatis, satu baris, cursor mapping. Simpan digit rupiah tanpa titik. Nilai desimal ambigu tidak boleh berubah menjadi kelipatan sepuluh/seratus akibat membuang separator.
+Grid Senin–Minggu. Setiap tanggal menunjukkan income minus expense dalam format bertanda +100K/−45K/+1.25M; nol netral. Dua desimal maksimum, tanpa pembulatan yang membesarkan angka. Detail menunjukkan rupiah lengkap. Pada layar sempit label dibuat ringkas satu baris, tanggal tetap dominan.
 
-**Pemilih.** Gunakan `ChoiceField`: label di atas, nilai di kiri, chevron di kanan, daftar pilihan pada bottom sheet. Lepaskan fokus keyboard. Pilihan aktif mempunyai checkmark; daftar panjang dapat digulir. Dismiss mengembalikan fokus interaksi ke layar asal.
+Budget ditampilkan terpisah: batas, pemakaian, sisa, persen dan progress bar (visual dibatasi 100%, angka boleh lebih). Hari ini masih sementara, hari mendatang belum aktual, hari tanpa rencana tidak disebut surplus. Transportasi/tagihan memakai cadangannya lebih dahulu; saldo perkiraan gaji tidak menjadi dana yang bisa dibelanjakan.
 
-**Transaksi.** Satu baris memuat tanggal, merchant/keterangan, nominal, sumber/kategori, dan chevron. Transfer sendiri tidak diberi label pengeluaran. Calon duplikat harus jelas belum dihitung.
+## Notifikasi dan bahasa
 
-**Penyimpanan.** Tombol utama berada setelah input/ringkasan, menampilkan “Menyimpan…” saat sibuk. Jangan menutup form sebelum berhasil. Kegagalan menjaga isian. Konfirmasi keluar hanya untuk draft yang benar-benar berubah/berisi.
+Bahasa Indonesia singkat dan tidak menghakimi: “Yuk, susun ulang belanja hari ini”, “Ada transaksi yang perlu kamu cek”. Sertakan alasan nyata, jangan menjanjikan hasil investasi.
 
-**Privasi nominal.** Tombol mata memiliki label aksesibilitas yang menjelaskan aksi. Pilihan disimpan. Grafik proporsi dan warna status kalender yang menyiratkan kondisi keuangan ikut disembunyikan ketika nominal disembunyikan.
+Konfirmasi memakai channel Lux Wallet Transactions dan ID logis transaksi. Antrean persisten mencegah duplikat/replay. Transfer ditunda saat menunggu pasangan; pembatasan Android dapat menambah jeda. Satu snackbar singkat tanpa modal, dengan aksi Lihat ketika aplikasi aktif. Pesan layar kunci selalu umum; nominal hanya ada pada notifikasi privat jika mode hide tidak aktif. Pengingat harian edukasi terpisah, opt-in, maksimal sekali sehari pada jam siang.
 
-**Pemantauan.** Lonceng kecil di header Beranda, titik status berkedip lembut sekitar 1,2 detik. Ketukan membuka pengaturan pemantauan. Tidak memakai kartu status besar di Beranda. Tetap dapat dipahami tanpa animasi melalui label status.
+## Pemeriksaan dan rilis
 
-## Kalender dan angka anggaran
+Periksa terang/gelap, layar 320/393 dp, angka panjang, daftar kosong, pilihan tab setelah kembali, keyboard/sheet, privasi, serta kondisi Lumi. Test otomatis meliputi matematika, parser, ledger, migrasi, notifikasi dan UI. Simulasi tidak menggantikan pemeriksaan launcher/biometrik/notifikasi pada HP fisik.
 
-Waktu lokal perangkat. Header bulan yang jelas, tombol mundur/maju, grid Senin–Minggu. Sel dipilih menunjukkan panel rincian dan transaksi.
-
-Tampilkan dua label berbeda: “Selisih arus kas” dan “Surplus/minus budget”. Hari ini: “Sisa budget sementara”. Hari tanpa rencana: “Belum ada target”. Masa depan: “Belum ada hasil aktual”. Jangan membuat hari tanpa data tampak sebagai keberhasilan finansial.
-
-Bar budget menunjukkan penggunaan aktual terhadap target harian. Saat dana kurang, tampilkan penjelasan dan aksi tinjau rencana; angka besar tidak boleh menyiratkan uang yang belum diterima bisa dibelanjakan.
-
-## Bahasa Lumi
-
-Gunakan Indonesia sehari-hari yang singkat dan spesifik:
-
-- “Konfirmasi saldo yang tersedia.”
-- “Budget hari ini sudah terlampaui. Periksa transaksi dan tunda belanja yang bisa menunggu.”
-- “Periode rencanamu berakhir. Catat pemasukan jika sudah diterima.”
-
-Hindari klaim “pasti untung”, “investasi terbaik untuk semua”, kalimat promosi panjang, dan jargon teknis pada alur pengguna. Jelaskan alasan saran serta tindakan yang bisa dilakukan. Penjelasan risiko ditempatkan dekat pilihan investasi yang relevan.
-
-Notifikasi tidak menampilkan nominal. Pesan layar kunci bersifat umum. Tidak ada notifikasi otomatis berulang pada hari yang sama atau pada jam tenang.
-
-## Pemeriksaan sebelum rilis
-
-Periksa tema terang/gelap, ponsel sempit/layar lebar, keyboard terbuka, daftar kosong/panjang, nominal besar, mode sembunyikan, kembali dari sheet/form/detail, klik tab berulang, tombol simpan saat lambat/gagal, serta ikon semua ekspresi. Angka pada Beranda, Kalender, dan Rencana harus mengikuti definisi yang sama.
-
-Pengujian UI simulasi tidak menggantikan pemeriksaan launcher, keyboard, biometrik, dan pengiriman notifikasi pada perangkat fisik. Catat lingkungan pengujian aktual pada catatan rilis.
+Setiap update harus menyertakan CHANGELOG dan menjalankan `build-update.ps1`. README wajib selalu memuat link langsung APK versi terbaru, checksum, dan perubahannya; script mengisi blok rilis secara otomatis. Aturan ini tetap berlaku pada pembaruan berikutnya tanpa permintaan ulang pemilik.

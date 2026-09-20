@@ -24,7 +24,7 @@ import com.luxwallet.app.core.ui.luxViewModel
     val category = state.mainCategories.firstOrNull { it.id == tx.categoryId }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).imePadding().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text("Detail transaksi", style = MaterialTheme.typography.headlineMedium)
-        Text(AmountFormat.rupiah(tx.amount), style = MaterialTheme.typography.headlineLarge)
+        Text(com.luxwallet.app.core.common.privateRupiah(tx.amount), style = MaterialTheme.typography.headlineLarge)
         if (held) OutlinedCard { Text("Notifikasi mirip dengan transaksi yang sudah dicatat. Nominal ini belum dihitung lagi. Pilih Abaikan duplikat jika satu pembayaran, atau Transaksi berbeda untuk menghitungnya.", Modifier.padding(18.dp)) }
         if (ignored) Text("Diabaikan · tidak memengaruhi saldo atau arus kas.")
         OutlinedTextField(merchant, { merchant = it }, Modifier.fillMaxWidth(), label = { Text("Merchant / penerima") }, enabled = !ignored)

@@ -32,6 +32,5 @@ keystore.properties
 AGENTS.md
 CLAUDE.md
 GEMINI.md
-IMPLEMENTATION_PLAN.md
 *.log
 .local/

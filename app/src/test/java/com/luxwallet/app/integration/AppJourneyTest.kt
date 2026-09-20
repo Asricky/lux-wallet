@@ -29,6 +29,7 @@ class AppJourneyTest {
     private lateinit var back: OnBackPressedDispatcher
     @Before fun prepare() = runBlocking {
         app.preferences.planV2Ready.first { it }
+        app.preferences.setProfileName("")
         app.accountRepository.createAccount("Rekening uji", AccountKind.BANK, AccountProvider.BCA, 100_000, 0)
         app.categoryRepository.resolveOrCreateTopLevel("Makan uji")
         Unit
@@ -60,7 +61,7 @@ class AppJourneyTest {
         compose.onNodeWithText("3.000").assertIsDisplayed()
         compose.onNodeWithText("Lanjut ke ringkasan").performScrollTo().performClick()
         compose.onNodeWithText("Simpan transaksi").performScrollTo().performClick()
-        compose.waitUntil(5000) { compose.onAllNodesWithText("LUX WALLET").fetchSemanticsNodes().isNotEmpty() }
+        compose.waitUntil(5000) { compose.onAllNodesWithText("Hi there 👋").fetchSemanticsNodes().isNotEmpty() }
         val transactions = runBlocking { app.transactionRepository.observeAll().first() }
         Assert.assertEquals(1, transactions.count { it.isManual && it.amount == 3000L })
         compose.onNodeWithText("Kalender").performClick()
@@ -68,7 +69,7 @@ class AppJourneyTest {
         compose.onNodeWithText("Aset").performClick()
         compose.onNodeWithText("Aset saya").assertIsDisplayed()
         compose.runOnIdle { back.onBackPressed() }
-        compose.onNodeWithText("LUX WALLET").assertIsDisplayed()
+        compose.onNodeWithText("Hi there 👋").assertIsDisplayed()
     }
     @Test fun abandoningDraftRequiresAnExplicitChoiceThenReturns() {
         launch()
@@ -80,8 +81,37 @@ class AppJourneyTest {
         compose.onNodeWithText("3.200.000").assertIsDisplayed()
         compose.onNodeWithContentDescription("Kembali").performClick()
         compose.onNodeWithText("Buang catatan").performClick()
-        compose.onNodeWithText("LUX WALLET").assertIsDisplayed()
+        compose.onNodeWithText("Hi there 👋").assertIsDisplayed()
         Assert.assertTrue(runBlocking { app.transactionRepository.observeAll().first() }.none { it.isManual })
+    }
+    @Test
+    @Config(sdk = [34], application = LuxWalletApp::class, qualifiers = "w320dp-h640dp-mdpi")
+    @org.robolectric.annotation.GraphicsMode(org.robolectric.annotation.GraphicsMode.Mode.NATIVE)
+    fun smallScreenProfileAssetsAndNotificationSettingsRemainUsable() {
+        runBlocking { app.preferences.setProfileName("Lucas"); app.preferences.setAmountsHidden(false) }
+        lateinit var androidView: android.view.View
+        compose.setContent {
+            androidView = androidx.compose.ui.platform.LocalView.current
+            nav = rememberNavController()
+            LuxWalletTheme { LuxAppScaffold(nav) }
+        }
+        compose.waitUntil(5000) { compose.onAllNodesWithText("Hi, Lucas 👋").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText("Aset").performClick()
+        compose.onNodeWithText("Alokasi aset").assertIsDisplayed()
+        fun capture(name: String) {
+            compose.waitForIdle()
+            val bitmap = android.graphics.Bitmap.createBitmap(androidView.width, androidView.height, android.graphics.Bitmap.Config.ARGB_8888)
+            compose.runOnIdle { androidView.draw(android.graphics.Canvas(bitmap)) }
+            java.io.File("build/reports/ui").mkdirs()
+            java.io.File("build/reports/ui/$name").outputStream().use { bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
+        }
+        capture("assets-320.png")
+        compose.runOnIdle { nav.openScreen(LuxDestinations.ALERT_SETTINGS) }
+        compose.onNodeWithText("Kabar transaksi, sesuai pilihanmu").assertIsDisplayed()
+        compose.onNodeWithText("Peringatan budget").performScrollTo().assertIsDisplayed()
+        capture("notifications-320.png")
+        compose.onNodeWithContentDescription("Kembali").performClick()
+        compose.onNodeWithText("Aset saya").assertIsDisplayed()
     }
     @Test
     @Config(sdk = [34], application = LuxWalletApp::class, qualifiers = "w393dp-h851dp-mdpi")
@@ -100,7 +130,7 @@ class AppJourneyTest {
             nav = rememberNavController()
             LuxWalletTheme(theme) { LuxAppScaffold(nav) }
         }
-        compose.waitUntil(5000) { compose.onAllNodesWithText("LUX WALLET").fetchSemanticsNodes().isNotEmpty() && compose.onAllNodesWithText("Memuat…").fetchSemanticsNodes().isEmpty() }
+        compose.waitUntil(5000) { compose.onAllNodesWithText("Hi there 👋").fetchSemanticsNodes().isNotEmpty() && compose.onAllNodesWithText("Memuat…").fetchSemanticsNodes().isEmpty() }
         val dir = java.io.File("build/reports/ui").apply { mkdirs() }
         fun capture(name: String) {
             compose.waitForIdle()

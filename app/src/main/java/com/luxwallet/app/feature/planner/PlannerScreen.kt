@@ -45,7 +45,7 @@ val planDateFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy
         text = { Text("Rencana sebelumnya tetap tersimpan.") },
         confirmButton = { TextButton({ discard = false; editing = false }) { Text("Batalkan perubahan") } },
         dismissButton = { TextButton({ discard = false }) { Text("Lanjut mengisi") } })
-    fun money(value: Long) = if (hidden && !editing) "Rp ••••••" else AmountFormat.rupiah(value)
+    fun money(value: Long) = if (hidden && !editing) "********" else AmountFormat.rupiah(value)
     fun begin() {
         val previous = state.latest
         cash = "" // Always confirm actual liquid money; never infer Rp3.2m or forecast income.

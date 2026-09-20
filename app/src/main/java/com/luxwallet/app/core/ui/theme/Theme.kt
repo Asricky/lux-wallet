@@ -6,27 +6,27 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
-val LuxGold = Color(0xFFD8B66A)
-val LuxInk = Color(0xFF141413)
+val LuxGold = Color(0xFFF5B942)
+val LuxInk = Color(0xFF16324F)
 private val light = lightColorScheme(
-    primary = Color(0xFF76571D), onPrimary = Color.White,
-    primaryContainer = Color(0xFFF2E5C5), onPrimaryContainer = LuxInk,
-    secondary = Color(0xFF72644A), onSecondary = Color.White,
-    secondaryContainer = Color(0xFFECE3D0), onSecondaryContainer = LuxInk,
-    background = Color(0xFFF6F4EF), onBackground = LuxInk,
-    surface = Color(0xFFFFFDF8), onSurface = LuxInk,
-    surfaceVariant = Color(0xFFEFECE4), onSurfaceVariant = Color(0xFF656057),
-    outline = Color(0xFF827A6D), outlineVariant = Color(0xFFDED8CB)
+    primary = Color(0xFF087A78), onPrimary = Color.White,
+    primaryContainer = Color(0xFFDDF8F6), onPrimaryContainer = LuxInk,
+    secondary = Color(0xFF087A78), onSecondary = Color.White,
+    secondaryContainer = Color(0xFFEAFBF7), onSecondaryContainer = LuxInk,
+    background = Color(0xFFF7FAFC), onBackground = LuxInk,
+    surface = Color(0xFFFFFFFF), onSurface = LuxInk,
+    surfaceVariant = Color(0xFFEDF5F6), onSurfaceVariant = Color(0xFF64748B),
+    outline = Color(0xFF748A91), outlineVariant = Color(0xFFDCE7EC)
 )
 private val dark = darkColorScheme(
-    primary = LuxGold, onPrimary = LuxInk,
-    primaryContainer = Color(0xFF3B3220), onPrimaryContainer = Color(0xFFF3DFC0),
-    secondary = LuxGold, onSecondary = LuxInk,
-    secondaryContainer = Color(0xFF353023), onSecondaryContainer = LuxGold,
-    background = Color(0xFF101110), onBackground = Color(0xFFF5F1E8),
-    surface = Color(0xFF191A18), onSurface = Color(0xFFF5F1E8),
-    surfaceVariant = Color(0xFF232420), onSurfaceVariant = Color(0xFFBBB7AC),
-    outline = Color(0xFF8D8779), outlineVariant = Color(0xFF393A33)
+    primary = Color(0xFF4FD1C5), onPrimary = LuxInk,
+    primaryContainer = Color(0xFF12413F), onPrimaryContainer = Color(0xFFDDF8F6),
+    secondary = Color(0xFF4FD1C5), onSecondary = LuxInk,
+    secondaryContainer = Color(0xFF233F3D), onSecondaryContainer = LuxGold,
+    background = Color(0xFF0D1A22), onBackground = Color(0xFFEAF4F6),
+    surface = Color(0xFF142731), onSurface = Color(0xFFEAF4F6),
+    surfaceVariant = Color(0xFF20353F), onSurfaceVariant = Color(0xFFB1C7CE),
+    outline = Color(0xFF859FA8), outlineVariant = Color(0xFF334C57)
 )
 enum class LuxThemePreference { SYSTEM, LIGHT, DARK }
 @Composable fun LuxWalletTheme(themePreference: LuxThemePreference = LuxThemePreference.SYSTEM, content: @Composable () -> Unit) {

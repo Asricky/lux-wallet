@@ -156,7 +156,7 @@ Input rupiah manual menggunakan bilangan bulat sampai 15 digit dengan titik pemi
 
 ## 12. Identitas Lumi
 
-Lumi adalah penguin hitam dengan wajah krem, aksen emas, dan dompet di dada. Tiga ekspresi tersedia: tenang, senang, fokus. Karakter harus tetap orisinal dan tidak menyalin karakter bank atau aplikasi lain.
+Lumi mengikuti referensi `Lumi-mascot.png`: burung membulat teal, wajah/perut krem, kaki emas, dan huruf L. Sembilan ekspresi: Happy, Proud, Calm, Excited, Curious, Nervous, Shocked, Sad, Angry. Ikon launcher memiliki versi tenang, senang, fokus serta mode mengikuti rencana.
 
 Ikon launcher dapat dipilih tetap atau mengikuti kondisi rencana ketika aplikasi dibuka. Perubahan mengaktifkan alias baru sebelum menonaktifkan alias lama agar tetap ada pintu masuk. Launcher tertentu mungkin memperbarui tampilan dengan jeda.
 
@@ -174,15 +174,15 @@ Mode diagnostik tidak aktif secara default. Penemuan paket hanya mencatat nama p
 
 Kotlin, Jetpack Compose Material 3, Navigation Compose, ViewModel/Flow, Room, DataStore Preferences, WorkManager, dan Android Keystore. Parser dan mesin perhitungan memiliki pengujian terpisah dari UI.
 
-Database v1 → v2 menambah eventTime/contentHash observation. V2 → v3 menambah tabel payday_plans. Upgrade tidak memakai destructive migration. Backup payload tetap dapat membaca cadangan lama tanpa snapshot kalender melalui nilai default kosong.
+Database v1 → v2 menambah eventTime/contentHash observation. V2 → v3 menambah tabel payday_plans. V3 → v4 menambah transaction_confirmations, kosong saat migrasi, agar histori lama tidak dinotifikasi ulang. Upgrade tidak memakai destructive migration. Backup payload tetap dapat membaca cadangan lama tanpa snapshot kalender melalui nilai default kosong.
 
 Pengamatan data UI mengikuti perubahan transaksi dan tanggal lokal. Tidak ada backend, biaya langganan, atau akses layanan daring untuk perhitungan inti. Tautan sumber investasi dibuka oleh pengguna di browser.
 
 ## 15. Distribusi dan penerimaan
 
-Artefak berada di `app/build/outputs/apk/debug/app-debug-vN.apk`. Jalankan `build-update.ps1` untuk test, lint, build, dan kenaikan nomor hanya setelah build berhasil. Nama launcher tetap Lux Wallet. Application ID debug dan sertifikat harus tetap sama agar update mempertahankan data.
+Artefak berada di `app/build/outputs/apk/debug/app-debug-vN.apk`. Jalankan `build-update.ps1` untuk test, lint, build, dan kenaikan nomor hanya setelah build berhasil. Setiap pembaruan wajib memperbarui CHANGELOG; script otomatis memperbarui README dengan link download langsung APK terbaru, versi, checksum, serta catatan perubahan. Kebijakan ini berlaku untuk seluruh rilis berikutnya tanpa menunggu permintaan ulang pemilik. Nama launcher tetap Lux Wallet. Application ID debug dan sertifikat harus tetap sama agar update mempertahankan data.
 
-Penerimaan v3:
+Penerimaan dasar (dipertahankan sejak v3):
 
 - Empat menu dapat dipilih berulang, halaman detail bisa kembali, formulir kembali ke asal setelah disimpan/dibatalkan.
 - Rupiah bertitik, cursor mapping, hapus, dan paste diuji.
@@ -199,3 +199,31 @@ Penerimaan v3:
 Belum tersedia sinkronisasi cloud, impor riwayat bank yang tidak tertangkap, penggabungan/pemisahan transaksi manual, percakapan Lumi, atau jaminan format notifikasi semua versi bank. Otomasi rencana berdasarkan seluruh tagihan terjadwal dan perhitungan khusus hari libur dapat dikembangkan berikutnya.
 
 Snapshot anggaran bukan saldo bank langsung: data yang terlambat masuk, pencatatan dari akun yang tidak termasuk uang snapshot, atau perpindahan investasi eksternal harus ditinjau. Jangan menambahkan nilai aset nonlikuid ke saldo belanja hanya agar angka alokasi tampak cukup.
+
+## 17. Penyempurnaan v4
+
+- Sapaan memakai nama panggilan opsional dari onboarding atau Pengaturan → Profil; fallback `Hi there 👋`. Nama bukan identitas rekening dan tidak dipakai untuk mencocokkan transfer.
+- Empat tab menyimpan state/posisi gulir melalui saveState/restoreState/launchSingleTop. Halaman detail dibuang sebelum menyimpan state tab sehingga form lama tidak muncul lagi. Transisi NavHost tanpa fade.
+- Tema mengikuti Lumi: teal/mint dengan emas sebagai aksen. Kartu 20–28 dp, chevron Material, maksimal satu ilustrasi Lumi utama per layar.
+- Mode privasi memakai `********` pada tampilan finansial dan menutup proporsi grafik. Input dan ringkasan transaksi yang sedang dibuat sengaja tetap terbaca untuk verifikasi.
+- Sel kalender menampilkan pemasukan dikurangi pengeluaran bertanda, format K/M/B maksimal dua desimal dibulatkan ke nol. Rincian mempertahankan rupiah penuh dan hasil budget sebagai konsep terpisah.
+
+### Aturan Lumi
+
+Jika budget nol tetapi ada belanja, tampilkan peringatan serius (persentase tidak dianggap rasio bermakna). Budget 0–50% Happy, di atas 50 sampai kurang dari 75% Calm, 75–100% Nervous, di atas 100 sampai 120% Sad, di atas 120% Angry (peringatan serius yang suportif). Kekurangan dana bebas mendapat prioritas peringatan. Hari lampau dengan rencana dan penggunaan di bawah 75% dapat memakai Proud. Jangan menganggap sisa budget sebagai pendapatan.
+
+Di Beranda: risiko budget serius mengalahkan ekspresi peristiwa; transaksi belum ditinjau memakai Curious; transaksi pengeluaran terbaru dalam satu jam yang lebih dari tiga kali rata-rata minimal tiga pengeluaran tujuh hari sebelumnya memakai Shocked; pemasukan nyata terbaru memakai Excited. Transfer sendiri, penyesuaian, dan transaksi diabaikan tidak boleh dianggap pendapatan. Tidak membuat klaim komparasi tanpa sampel.
+
+### Konfirmasi pencatatan
+
+Satu receipt persisten per ID transaksi logis, ditulis atomik bersama transaksi/ledger. Penggabungan transfer memperbarui waktu siap receipt yang sama. Duplikat tidak membuat receipt baru. Pekerja hanya membaca transaksi committed. Filter semua transaksi, pemasukan, pengeluaran, transfer, perlu ditinjau, dan budget default ON, terpisah dari izin Android dan pengingat harian opt-in.
+
+Transfer otomatis ditunda selama jendela pencocokan 30 menit dari waktu pencatatan; pasangan yang cocok membuatnya siap lebih cepat. Kedatangan pasangan setelah receipt ditangani tetap memperbaiki ledger tanpa konfirmasi kedua. Pengiriman Android memakai tag ID stabil dan onlyAlertOnce untuk retry. Tidak ada transaksi sistem terdistribusi atomik antara SQLite dan NotificationManager: proses mati tepat setelah notify sebelum commit dapat memanggil notify lagi dengan tag sama (mengganti kartu aktif, tidak menambah kartu kedua).
+
+Izin/filter mati mengonsumsi receipt tanpa replay setelah diaktifkan. Migrasi dan pemulihan cadangan tidak membuat receipt untuk transaksi historis. Isi notifikasi mengikuti mode privasi; layar kunci selalu umum. Ketukan membuka detail lewat gerbang onboarding/biometrik. Listener menolak paket aplikasi sendiri sebelum pemetaan/parser. Saat aplikasi aktif, snackbar singkat memberi aksi Lihat tanpa dialog pemblokir.
+
+Peringatan budget memakai rencana aktual dan transaksi cashflow eligible, ambang 75%, >100%, >120%; maksimal satu per ambang/hari, satu kartu per tanggal. Pengingat harian edukasi tetap terpisah dan opt-in.
+
+### Validasi rilis v4
+
+Regresi parser/ledger lama, konfirmasi sekali, izin/filter, self-notification, transfer satu receipt, migrasi v1/v2/v3 dengan saldo/ledger, nominal kalender, batas ekspresi, sapaan, privasi, state tab, serta render tema terang/gelap. Pengujian perangkat fisik dinyatakan terpisah dari simulasi JVM. Build tidak diterbitkan sebelum test dan lint selesai.

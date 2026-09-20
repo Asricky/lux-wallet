@@ -47,10 +47,10 @@ class CoachNotificationTest {
             LumiLauncher.apply(context, mood)
             val enabled = names.filter { name -> context.packageManager.getComponentEnabledSetting(
                 ComponentName(context.packageName, "com.luxwallet.app.$name")) == PackageManager.COMPONENT_ENABLED_STATE_ENABLED }
-            assertEquals(listOf(names[mood.ordinal]), enabled)
+            assertEquals(listOf(names[when(mood) { LumiMood.HAPPY, LumiMood.PROUD, LumiMood.EXCITED -> 1; LumiMood.CALM, LumiMood.CURIOUS -> 0; else -> 2 }]), enabled)
             val launcherIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)
             assertNotNull(launcherIntent)
-            assertEquals("com.luxwallet.app.${names[mood.ordinal]}", launcherIntent!!.component!!.className)
+            assertEquals("com.luxwallet.app.${names[when(mood) { LumiMood.HAPPY, LumiMood.PROUD, LumiMood.EXCITED -> 1; LumiMood.CALM, LumiMood.CURIOUS -> 0; else -> 2 }]}", launcherIntent!!.component!!.className)
         }
     }
 }

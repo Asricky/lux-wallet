@@ -39,10 +39,12 @@ import kotlinx.coroutines.flow.collectLatest
 
 class MainActivity : FragmentActivity() {
     var openCoach by mutableStateOf(false)
+    var openTransaction by mutableStateOf<Long?>(null)
     override fun onNewIntent(intent: android.content.Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
         openCoach = intent.getBooleanExtra("open_coach", false)
+        openTransaction = intent.getLongExtra("transaction_id", 0).takeIf { it > 0 }
     }
     override fun onResume() {
         super.onResume()
@@ -56,6 +58,7 @@ class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         openCoach = intent.getBooleanExtra("open_coach", false)
+        openTransaction = intent.getLongExtra("transaction_id", 0).takeIf { it > 0 }
         enableEdgeToEdge()
 
         val app = application as LuxWalletApp
@@ -79,7 +82,10 @@ class MainActivity : FragmentActivity() {
                     ThemeMode.DARK -> LuxThemePreference.DARK
                 }
             ) {
-                LuxWalletRoot(this)
+                val hidden by app.preferences.amountsHidden.collectAsState(initial = true)
+                androidx.compose.runtime.CompositionLocalProvider(com.luxwallet.app.core.common.LocalAmountsHidden provides hidden) {
+                    LuxWalletRoot(this)
+                }
             }
         }
     }
@@ -119,6 +125,13 @@ private fun LuxWalletRoot(activity: FragmentActivity) {
 
             if (unlocked) {
                 com.luxwallet.app.navigation.LuxAppScaffold(navController)
+                LaunchedEffect((activity as? MainActivity)?.openTransaction) {
+                    (activity as? MainActivity)?.openTransaction?.let { id ->
+                        navController.navigate(LuxDestinations.transactionDetail(id)) { launchSingleTop = true }
+                        activity.openTransaction = null
+                        activity.intent.removeExtra("transaction_id")
+                    }
+                }
                 LaunchedEffect((activity as? MainActivity)?.openCoach) {
                     if ((activity as? MainActivity)?.openCoach == true) {
                         navController.navigate(LuxDestinations.COACH) { launchSingleTop = true }

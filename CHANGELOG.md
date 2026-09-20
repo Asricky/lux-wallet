@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.4 — 2026-09-20
+
+- Tampilan teal/mint, sapaan nama dari profil, sembilan ekspresi Lumi, dan ikon launcher baru dari referensi Lumi.
+- Tab menyimpan posisi/pilihan tanpa fade dan tanpa memulihkan formulir lama; CTA memakai chevron yang konsisten.
+- Nominal tersembunyi memakai `********` pada saldo, aset, arus kas, transaksi, target, dan hasil simulasi.
+- Kalender menampilkan arus kas harian bertanda, misalnya +100K atau −1.25M, terpisah dari hasil terhadap budget.
+- Konfirmasi transaksi Android dengan antrean persisten, filter per jenis, tautan detail, snackbar, serta peringatan budget.
+- Migrasi Room v4 mempertahankan ledger dan saldo; transfer memakai satu konfirmasi. Pembaruan notifikasi setelah transfer digabung tetap melekat pada transaksi yang sama.
+- README diperbarui otomatis oleh proses rilis: link unduh terbaru, versi, checksum APK, dan catatan perubahan dari changelog.
+
 ## 1.0.3 — 2026-09-19
 
 - Perbaikan navigasi akar menu, panah kembali, alur draft/ringkasan, fokus keyboard, dan bilah adaptif empat menu.

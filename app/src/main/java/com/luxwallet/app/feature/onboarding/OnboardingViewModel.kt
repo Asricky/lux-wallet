@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 class OnboardingViewModel(private val app: LuxWalletApp) : ViewModel() {
     val saving = MutableStateFlow(false)
     val error = MutableStateFlow<String?>(null)
-    fun finish(balances: Map<AccountProvider, Long>, sources: Set<SourceApp>, income: Long, obligations: Long, savings: Long, investment: Long) {
+    fun finish(balances: Map<AccountProvider, Long>, sources: Set<SourceApp>, income: Long, obligations: Long, savings: Long, investment: Long, profileName: String = "") {
         if (saving.value) return
         saving.value = true
         viewModelScope.launch {
@@ -35,6 +35,7 @@ class OnboardingViewModel(private val app: LuxWalletApp) : ViewModel() {
                         investmentTargetMonthly = investment, onboardingCompleted = true))
                 }
                 SourceApp.entries.forEach { app.preferences.setSourceEnabled(it, it in sources) }
+                app.preferences.setProfileName(profileName)
                 app.preferences.setOnboardingComplete(true)
             } catch (e: Exception) {
                 if (e is kotlinx.coroutines.CancellationException) throw e

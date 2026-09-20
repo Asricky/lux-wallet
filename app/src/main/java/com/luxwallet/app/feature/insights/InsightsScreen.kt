@@ -45,7 +45,7 @@ fun InsightsScreen() {
                 InsightSeverity.INFO -> semantic.neutral
             }
             Card(Modifier.fillMaxWidth()) {
-                Text(insight.message, Modifier.padding(16.dp), color = color, style = MaterialTheme.typography.bodyLarge)
+                Text(if (com.luxwallet.app.core.common.LocalAmountsHidden.current) "Rincian wawasan disembunyikan. Tampilkan nominal dari Beranda untuk membacanya." else insight.message, Modifier.padding(16.dp), color = color, style = MaterialTheme.typography.bodyLarge)
             }
         }
 

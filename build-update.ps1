@@ -8,6 +8,7 @@ try {
     $outputDir = Join-Path $PSScriptRoot 'app/build/outputs/apk/debug'
     $nextVersion = [Math]::Max($currentVersion, $builtVersion + 1)
     if ($Preview) { Write-Output (Join-Path $outputDir "app-debug-v$nextVersion.apk"); return }
+    & (Join-Path $PSScriptRoot 'update-readme.ps1') -Version $nextVersion -ValidateOnly
     $archiveDir = Join-Path $PSScriptRoot '.local/apk-archive'
     New-Item -ItemType Directory -Force -Path $archiveDir | Out-Null
     Get-ChildItem -LiteralPath $outputDir -Filter 'app-debug-v*.apk' -ErrorAction SilentlyContinue |
@@ -18,6 +19,7 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Build gagal. Nomor versi tidak diubah.' }
     $apk = Join-Path $outputDir "app-debug-v$nextVersion.apk"
     if (-not (Test-Path -LiteralPath $apk)) { throw "APK tidak ditemukan: $apk" }
+    & (Join-Path $PSScriptRoot 'update-readme.ps1') -Version $nextVersion -ApkPath $apk
     [IO.File]::WriteAllText($versionFile, "APK_VERSION=$nextVersion" + [Environment]::NewLine + "BUILT_VERSION=$nextVersion" + [Environment]::NewLine)
     Write-Host "APK siap: $apk"
     Get-FileHash -LiteralPath $apk -Algorithm SHA256

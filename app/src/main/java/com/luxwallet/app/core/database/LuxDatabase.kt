@@ -33,6 +33,7 @@ import com.luxwallet.app.core.database.entity.TransactionEntity
  */
 @Database(
     entities = [
+        com.luxwallet.app.core.database.entity.TransactionConfirmationEntity::class,
         AccountEntity::class,
         AssetEntity::class,
         LiabilityEntity::class,
@@ -46,11 +47,12 @@ import com.luxwallet.app.core.database.entity.TransactionEntity
         FinancialProfileEntity::class,
         com.luxwallet.app.core.database.entity.PaydayPlanEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
 abstract class LuxDatabase : RoomDatabase() {
+    abstract fun transactionConfirmationDao(): com.luxwallet.app.core.database.dao.TransactionConfirmationDao
     abstract fun paydayPlanDao(): com.luxwallet.app.core.database.dao.PaydayPlanDao
     abstract fun accountDao(): AccountDao
     abstract fun assetDao(): AssetDao
@@ -74,6 +76,11 @@ abstract class LuxDatabase : RoomDatabase() {
         val MIGRATION_2_3 = object : androidx.room.migration.Migration(2, 3) {
             override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
                 db.execSQL("CREATE TABLE IF NOT EXISTS payday_plans (startDay INTEGER NOT NULL, capturedAt INTEGER NOT NULL, payload TEXT NOT NULL, PRIMARY KEY(startDay))")
+            }
+        }
+        val MIGRATION_3_4 = object : androidx.room.migration.Migration(3, 4) {
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS transaction_confirmations (transactionId INTEGER NOT NULL, dueAt INTEGER NOT NULL, handled INTEGER NOT NULL, PRIMARY KEY(transactionId))")
             }
         }
         const val DATABASE_NAME = "lux_wallet.db"

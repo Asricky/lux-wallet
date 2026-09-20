@@ -35,6 +35,8 @@ class NavigationFlowTest {
                     NavHost(controller, LuxDestinations.HOME) {
                         mainRoutes.forEach { route -> composable(route) {
                             Column {
+                                var visits by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(0) }
+                                Button({ visits++ }) { Text("Pilihan $visits") }
                                 Text("Layar $route")
                                 Button({ controller.openScreen(LuxDestinations.CALCULATOR) }) { Text("Buka hitungan") }
                             }
@@ -77,6 +79,32 @@ class NavigationFlowTest {
         compose.onNodeWithText("Isi catatan").assertIsDisplayed()
         compose.onNodeWithContentDescription("Kembali").performClick()
         compose.onNodeWithText("Layar assets").assertIsDisplayed()
+    }
+    @Test fun tabsPreserveTheirOwnStateWithoutRestoringDetailForms() {
+        launchShell()
+        compose.onNodeWithText("Kalender").performClick()
+        compose.onNodeWithText("Pilihan 0").performClick()
+        compose.onNodeWithText("Aset").performClick()
+        compose.onNodeWithText("Pilihan 0").assertIsDisplayed()
+        compose.onNodeWithText("Kalender").performClick()
+        compose.onNodeWithText("Pilihan 1").assertIsDisplayed()
+        compose.onNodeWithText("Buka hitungan").performClick()
+        compose.runOnIdle { nav.openScreen(LuxDestinations.ASSETS) }
+        compose.onNodeWithText("Kalender").performClick()
+        compose.onNodeWithText("Pilihan 1").assertIsDisplayed()
+        compose.onNodeWithText("Isi kalkulator").assertDoesNotExist()
+    }
+    @Test fun privacyMasksAndRevealsFinancialAmounts() {
+        var hidden by mutableStateOf(true)
+        compose.setContent {
+            CompositionLocalProvider(com.luxwallet.app.core.common.LocalAmountsHidden provides hidden) {
+                Text(com.luxwallet.app.core.common.privateRupiah(3200000))
+            }
+        }
+        compose.onNodeWithText("********").assertIsDisplayed()
+        compose.onNodeWithText("Rp3.200.000").assertDoesNotExist()
+        compose.runOnIdle { hidden = false }
+        compose.onNodeWithText("Rp3.200.000").assertIsDisplayed()
     }
     @Test fun amountCanBeTypedReplacedAndClearedWithGrouping() {
         var raw = ""

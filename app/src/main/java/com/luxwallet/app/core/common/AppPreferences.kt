@@ -22,6 +22,16 @@ private val Context.dataStore by preferencesDataStore(name = "lux_wallet_setting
  */
 class AppPreferences(private val context: Context) {
 
+    val budgetAlertMarker = context.dataStore.data.map { it[stringPreferencesKey("budget_alert_marker")] ?: "" }
+    suspend fun setBudgetAlertMarker(value: String) { context.dataStore.edit { it[stringPreferencesKey("budget_alert_marker")] = value } }
+    val profileName = context.dataStore.data.map { it[stringPreferencesKey("profile_name")] ?: "" }
+    suspend fun setProfileName(name: String) { context.dataStore.edit { it[stringPreferencesKey("profile_name")] = name.trim().take(40) } }
+    val notificationOptions = context.dataStore.data.map { prefs ->
+        NotificationOptions.entries.associateWith { prefs[booleanPreferencesKey("notify_${it.name}")] ?: true }
+    }
+    suspend fun setNotificationOption(option: NotificationOptions, enabled: Boolean) {
+        context.dataStore.edit { it[booleanPreferencesKey("notify_${option.name}")] = enabled }
+    }
     private object Keys {
         val COACH_ENABLED = booleanPreferencesKey("coach_enabled")
         val COACH_LAST_DATE = stringPreferencesKey("coach_last_date")

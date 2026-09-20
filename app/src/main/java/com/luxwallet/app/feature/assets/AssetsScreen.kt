@@ -7,7 +7,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -40,7 +40,7 @@ import kotlinx.coroutines.launch
     val account = edit?.takeIf { it.startsWith("account:") }?.substringAfter(':')?.toLongOrNull()?.let { id -> state.liquidAccounts.find { it.id == id } }
     val asset = edit?.takeIf { it.startsWith("asset:") }?.substringAfter(':')?.toLongOrNull()?.let { id -> (state.investments + state.otherAssets).find { it.id == id } }
     val liability = if (edit == "newDebt") com.luxwallet.app.core.database.entity.LiabilityEntity(name = "", type = com.luxwallet.app.core.model.LiabilityType.OTHER_DEBT, currentOutstanding = 0, updatedAt = System.currentTimeMillis()) else edit?.takeIf { it.startsWith("debt:") }?.substringAfter(':')?.toLongOrNull()?.let { id -> state.liabilities.find { it.id == id } }
-    fun money(value: Long) = if (hidden) "Rp ••••••" else AmountFormat.rupiah(value)
+    fun money(value: Long) = if (hidden) "********" else AmountFormat.rupiah(value)
     fun open(key: String, title: String, value: Long, type: AssetClass = AssetClass.OTHER) {
         edit = key; name = title; amount = value.toString(); assetClass = type; vm.error.value = null
     }
@@ -58,8 +58,20 @@ import kotlinx.coroutines.launch
             } }
         }
         item {
-            TabRow(tab) { listOf("Simpanan", "Investasi", "Lainnya", "Utang").forEachIndexed { index, label ->
-                Tab(tab == index, { tab = index }, text = { Text(label, style = MaterialTheme.typography.labelMedium) })
+            Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+                Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Alokasi aset", style = MaterialTheme.typography.titleMedium)
+                    listOf("Simpanan" to state.liquidAccounts.filter { it.includeInNetWorth }.sumOf { it.currentEstimatedBalance },
+                        "Investasi" to state.investments.filter { it.includeInNetWorth }.sumOf { it.currentValue },
+                        "Aset lainnya" to state.otherAssets.filter { it.includeInNetWorth }.sumOf { it.currentValue }).forEach { (label, value) ->
+                        Row(Modifier.fillMaxWidth()) { Text(label, Modifier.weight(1f)); Text(money(value)) }
+                    }
+                }
+            }
+        }
+        item {
+            ScrollableTabRow(tab, edgePadding = 0.dp) { listOf("Simpanan", "Investasi", "Lainnya", "Utang").forEachIndexed { index, label ->
+                Tab(tab == index, { tab = index }, text = { Text(label, style = MaterialTheme.typography.labelMedium, maxLines = 1) })
             } }
         }
         when (tab) {
@@ -114,10 +126,10 @@ private fun AssetClass.label() = when (this) {
 @Composable private fun AssetRow(name: String, subtitle: String, value: String, onEdit: () -> Unit) {
     Card(onEdit, Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(name, style = MaterialTheme.typography.titleMedium)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) { Icon(Icons.Outlined.AccountBalanceWallet, null, tint = MaterialTheme.colorScheme.primary); Text(name, style = MaterialTheme.typography.titleMedium) }
             Text(value, style = MaterialTheme.typography.headlineSmall)
             Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text("Ubah nominal →", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
+            Row(verticalAlignment = Alignment.CenterVertically) { Text("Ubah nominal", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge); Icon(Icons.Outlined.ChevronRight, null, Modifier.size(18.dp)) }
         }
     }
 }

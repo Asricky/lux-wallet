@@ -174,13 +174,21 @@ class TransactionRepository(
             accountDao.applyBalanceDelta(sourceAccountId, delta)
         }
 
+        if (type != TransactionType.BALANCE_ADJUSTMENT) queueConfirmation(txId, now)
         txId
     }
 
     suspend fun ingest(observation: NotificationObservationEntity, candidate: TransactionCandidate) = database.withTransaction {
         val stored = observationDao.getById(observation.id) ?: return@withTransaction
         if (stored.parseStatus != ParseStatus.PENDING) return@withTransaction
+        val previousId = transactionDao.lastId()
         ingestOnce(stored, candidate)
+        val id = observationDao.getById(stored.id)?.linkedTransactionId
+        val tx = id?.let { transactionDao.getById(it) }
+        if (tx != null && tx.id > previousId) {
+            val waiting = !tx.isInternalTransfer && tx.type in setOf(TransactionType.EXTERNAL_TRANSFER, TransactionType.EWALLET_TOPUP)
+            queueConfirmation(tx.id, if (waiting) tx.createdAt + MatchingEngine.DEFAULT_TIME_WINDOW_MS else System.currentTimeMillis())
+        }
     }
 
     private suspend fun ingestOnce(observation: NotificationObservationEntity, candidate: TransactionCandidate) {
@@ -211,6 +219,15 @@ class TransactionRepository(
             }
         for (old in observations) {
             val tx = old.linkedTransactionId?.let { transactionDao.getById(it) } ?: continue
+            // A merged transfer has one OUT direction, but its incoming observation still owns
+            // its original event identity. Re-delivery must attach to that same logical transfer.
+            if (tx.isInternalTransfer && tx.amount == candidate.amount &&
+                sourceAccount.id in listOf(tx.sourceAccountId, tx.destinationAccountId) &&
+                com.luxwallet.app.engine.NotificationIdentity.compare(old, observation) ==
+                    com.luxwallet.app.engine.NotificationIdentityMatch.SAME_EVENT) {
+                observationDao.update(observation.copy(linkedTransactionId = tx.id, parseStatus = ParseStatus.PARSED))
+                return
+            }
             if (tx.sourceAccountId != sourceAccount.id || tx.amount != candidate.amount || tx.direction != candidate.direction ||
                 tx.isManual || tx.isInternalTransfer) continue
             if (tx.referenceNumber != null && candidate.referenceNumber != null && tx.referenceNumber != candidate.referenceNumber) continue
@@ -374,6 +391,7 @@ class TransactionRepository(
                 .joinToString(",")
         )
         transactionDao.update(merged)
+        database.transactionConfirmationDao().ready(existingTransactionId, now)
 
         ledgerEntryDao.deleteForTransaction(existingTransactionId)
         ledgerEntryDao.insertAll(
@@ -423,6 +441,10 @@ class TransactionRepository(
         destinationProviderLabelHint = candidate.destinationProviderHint?.providerLabel,
         destinationOwnerNameHint = candidate.destinationProviderHint?.ownerNameRaw
     )
+
+    private suspend fun queueConfirmation(id: Long, dueAt: Long) {
+        database.transactionConfirmationDao().insert(com.luxwallet.app.core.database.entity.TransactionConfirmationEntity(id, dueAt))
+    }
 
     private suspend fun accountCacheSnapshot(): Map<Long, com.luxwallet.app.core.database.entity.AccountEntity> {
         // A plain suspend snapshot read; accounts are few, so this small full scan is inexpensive per ingest call.

@@ -130,8 +130,10 @@ class NotificationToLedgerIntegrationTest {
         ingestNotification(
             SourceApp.SHOPEEPAY, "Isi Saldo Berhasil",
             "Pengisian saldo sebesar Rp10.000 telah ditambahkan ke ShopeePay-mu. Saldo saat ini sebesar Rp25.191.",
-            postedAt = 2_000_000_000_000
+            postedAt = 2_000_000_000_000, notificationKey = "shopee-topup", eventTime = 2_000_000_000_000
         )
+        assertTrue(db.transactionConfirmationDao().due(System.currentTimeMillis()).isEmpty())
+        assertEquals(1, db.transactionConfirmationDao().due(Long.MAX_VALUE).size)
         // Sample 5: SeaBank sends Rp10.000 to ShopeePay, 15s later
         ingestNotification(
             SourceApp.SEABANK, "Pembayaran Berhasil",
@@ -150,6 +152,16 @@ class NotificationToLedgerIntegrationTest {
         // A reported snapshot must not silently overwrite the opening balance plus ledger delta.
         val shopeepay = accountRepository.getById(shopeepayAccountId)!!
         assertEquals(35_000L, shopeepay.currentEstimatedBalance)
+        // Incoming leg re-posted with a new post time after merging must retain event identity.
+        ingestNotification(SourceApp.SHOPEEPAY, "Isi Saldo Berhasil",
+            "Pengisian saldo sebesar Rp10.000 telah ditambahkan ke ShopeePay-mu. Saldo saat ini sebesar Rp25.191.",
+            2_000_000_020_000, notificationKey = "shopee-topup", eventTime = 2_000_000_000_000)
+        assertEquals(1, db.transactionDao().getAllOnce().size)
+        assertEquals(35_000L, accountRepository.getById(shopeepayAccountId)!!.currentEstimatedBalance)
+        assertEquals(listOf(tx.id), db.transactionConfirmationDao().due(System.currentTimeMillis()).map { it.transactionId })
+        db.transactionConfirmationDao().handled(tx.id)
+        ingestNotification(SourceApp.SEABANK, "Pembayaran Berhasil", "Kamu telah melakukan transfer virtual account sebesar Rp10.000 kepada ShopeePay ...", 2_000_000_015_000)
+        assertTrue(db.transactionConfirmationDao().due(Long.MAX_VALUE).isEmpty())
     }
 
     @Test

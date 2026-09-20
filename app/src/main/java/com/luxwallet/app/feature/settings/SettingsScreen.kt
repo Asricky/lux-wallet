@@ -37,10 +37,23 @@ import com.luxwallet.app.core.model.SourceApp
 import com.luxwallet.app.core.model.ThemeMode
 import com.luxwallet.app.core.ui.luxViewModel
 import java.io.File
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.saveable.rememberSaveable
+import kotlinx.coroutines.launch
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Spacer
+import com.luxwallet.app.LuxWalletApp
+
 
 @Composable
 fun SettingsScreen(
     onOpenCoach: () -> Unit = {},
+    onOpenNotifications: () -> Unit = {},
     onOpenAccounts: () -> Unit = {},
     onOpenCategories: () -> Unit = {},
     onOpenRules: () -> Unit = {},
@@ -49,6 +62,11 @@ fun SettingsScreen(
     val viewModel = luxViewModel { SettingsViewModel.create(it) }
     val state by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    val app = context.applicationContext as LuxWalletApp
+    val storedName by app.preferences.profileName.collectAsState(initial = null)
+    var name by rememberSaveable { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
+
 
     val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/octet-stream")) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
@@ -94,6 +112,11 @@ fun SettingsScreen(
     }
 
     LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        item { SettingsSection("Profil") {
+            OutlinedTextField(name ?: storedName.orEmpty(), { name = it.take(40) }, Modifier.fillMaxWidth(), label = { Text("Nama panggilan") }, singleLine = true)
+            TextButton(onClick = { scope.launch { app.preferences.setProfileName(name ?: storedName.orEmpty()); name = null } }, enabled = name != null) { Text("Simpan nama") }
+        } }
+        item { SettingsSection("Notifikasi") { SettingsLinkRow("Konfirmasi transaksi & peringatan budget", onOpenNotifications) } }
         item { SettingsSection("Lumi & pengingat") { SettingsLinkRow("Saran, notifikasi & ikon aplikasi", onOpenCoach) } }
         item { com.luxwallet.app.core.ui.component.NotificationStatusCard() }
         item {
@@ -174,14 +197,14 @@ private fun SettingsSection(title: String, content: @Composable ColumnScope.() -
 @Composable
 private fun SettingsLinkRow(label: String, onClick: () -> Unit) {
     TextButton(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
-        Text(label, modifier = Modifier.fillMaxWidth())
+        Text(label, modifier = Modifier.weight(1f)); Icon(Icons.Outlined.ChevronRight, null, Modifier.size(18.dp))
     }
 }
 
 @Composable
 private fun ToggleRow(label: String, checked: Boolean, onChange: (Boolean) -> Unit) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-        Text(label)
+        Text(label, Modifier.weight(1f))
         Switch(checked = checked, onCheckedChange = onChange)
     }
 }

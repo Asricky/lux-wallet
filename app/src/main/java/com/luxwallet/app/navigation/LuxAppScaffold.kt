@@ -1,6 +1,7 @@
 @file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 package com.luxwallet.app.navigation
 
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.foundation.layout.*
@@ -20,14 +21,19 @@ val mainRoutes = listOf(LuxDestinations.HOME, LuxDestinations.CALENDAR, LuxDesti
 
 fun NavHostController.openScreen(route: String) {
     if (route in mainRoutes) {
+        if (currentDestination?.route == route) return
+        // Discard detail/form destinations before saving only the current main tab.
+        while (currentDestination?.route !in mainRoutes && previousBackStackEntry != null) popBackStack()
         navigate(route) {
-            popUpTo(LuxDestinations.HOME)
+            popUpTo(LuxDestinations.HOME) { saveState = true }
+            restoreState = true
             launchSingleTop = true
         }
     } else navigate(route) { launchSingleTop = true }
 }
 
 private fun screenTitle(route: String?) = when (route) {
+    LuxDestinations.ALERT_SETTINGS -> "Notifikasi Lux Wallet"
     LuxDestinations.QUICK_ADD -> "Catat transaksi"
     LuxDestinations.TRANSACTION_DETAIL -> "Detail transaksi"
     LuxDestinations.TRANSACTIONS -> "Riwayat transaksi"
@@ -53,6 +59,17 @@ fun LuxAppScaffold(navController: NavHostController = rememberNavController(), c
     val route = entry?.destination?.route ?: LuxDestinations.HOME
     val isMain = route in mainRoutes
     val dispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
+    val snackbar = remember { SnackbarHostState() }
+    val lifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
+    LaunchedEffect(lifecycle) {
+        lifecycle.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.RESUMED) {
+            com.luxwallet.app.notification.TransactionFeedback.events.collect { event ->
+                kotlinx.coroutines.withTimeoutOrNull(2800) {
+                    if (snackbar.showSnackbar(event.title, "Lihat", duration = SnackbarDuration.Indefinite) == SnackbarResult.ActionPerformed) navController.openScreen(LuxDestinations.transactionDetail(event.id))
+                }
+            }
+        }
+    }
     val focus = LocalFocusManager.current
     val labels = listOf("Beranda", "Kalender", "Aset", "Lainnya")
     val icons = listOf(Icons.Outlined.Home, Icons.Outlined.CalendarMonth, Icons.Outlined.AccountBalanceWallet, Icons.Outlined.GridView)
@@ -66,7 +83,7 @@ fun LuxAppScaffold(navController: NavHostController = rememberNavController(), c
                         icon = { Icon(icons[i], null) }, label = { Text(labels[i]) })
                 }
             }
-            Scaffold(modifier = Modifier.weight(1f), topBar = {
+            Scaffold(modifier = Modifier.weight(1f), snackbarHost = { SnackbarHost(snackbar) }, topBar = {
                 if (!isMain) TopAppBar(title = { Text(screenTitle(route), maxLines = 1) }, navigationIcon = {
                     IconButton(onClick = { focus.clearFocus(); dispatcher?.onBackPressed() ?: navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Outlined.ArrowBack, "Kembali")

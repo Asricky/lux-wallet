@@ -58,7 +58,7 @@ import java.time.LocalDate
                 ChoiceField("Jadwal perjalanan", if (weekdays) "Hari kerja · Senin–Jumat" else "Setiap hari",
                     listOf("Hari kerja · Senin–Jumat", "Setiap hari"), { weekdays = it == 0 })
                 val plan = TransportPlan(AmountParser.normalizeOrNull(daily)?.coerceAtLeast(0) ?: 0, weekdays)
-                Text("Cadangan bulan ini: ${AmountFormat.rupiah(plan.monthlyReserve(LocalDate.now()))} untuk ${plan.daysInMonth(LocalDate.now())} hari.", style = MaterialTheme.typography.bodyMedium)
+                Text("Cadangan bulan ini: ${com.luxwallet.app.core.common.privateRupiah(plan.monthlyReserve(LocalDate.now()))} untuk ${plan.daysInMonth(LocalDate.now())} hari.", style = MaterialTheme.typography.bodyMedium)
                 Text("Top-up kapan saja melalui Pindah saldo / top-up sendiri. Catat pemakaiannya pada kategori Transportasi rutin. Dana ini dicadangkan sekali, tidak masuk penggunaan uang belanja bebas.", style = MaterialTheme.typography.bodySmall)
             } }
         }
@@ -97,7 +97,7 @@ import java.time.LocalDate
             Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(goal.name, style = MaterialTheme.typography.titleMedium)
                 LinearProgressIndicator(progress = { if (goal.targetAmount > 0) (goal.currentAmount.toFloat() / goal.targetAmount).coerceIn(0f, 1f) else 0f }, modifier = Modifier.fillMaxWidth())
-                Text("${AmountFormat.rupiah(goal.currentAmount)} / ${AmountFormat.rupiah(goal.targetAmount)}")
+                Text("${com.luxwallet.app.core.common.privateRupiah(goal.currentAmount)} / ${com.luxwallet.app.core.common.privateRupiah(goal.targetAmount)}")
             } }
         }
         item {

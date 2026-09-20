@@ -24,6 +24,7 @@ import com.luxwallet.app.core.ui.luxViewModel
     val saving by vm.saving.collectAsState()
     val error by vm.error.collectAsState()
     val context = LocalContext.current
+    var profileName by rememberSaveable { mutableStateOf("") }
     var step by rememberSaveable { mutableStateOf(0) }
     var sources by rememberSaveable { mutableStateOf(SourceApp.entries.map { it.name }.toTypedArray()) }
     var bca by rememberSaveable { mutableStateOf("") }
@@ -48,6 +49,7 @@ import com.luxwallet.app.core.ui.luxViewModel
                 Text("Kenali uangmu bersama Lumi", style = MaterialTheme.typography.headlineMedium)
                 Text("Lux Wallet mencatat transaksi dari notifikasi dan membantumu merencanakan uang sampai gajian.")
                 Text("Data disimpan di perangkat. Tidak meminta login bank atau melakukan pembayaran. Kamu tetap bisa mencatat manual.")
+                OutlinedTextField(profileName, { profileName = it.take(40) }, Modifier.fillMaxWidth(), label = { Text("Nama panggilan (opsional)") }, singleLine = true)
                 Button({ step++ }, Modifier.fillMaxWidth()) { Text("Mulai") }
             }
             1 -> {
@@ -84,7 +86,7 @@ import com.luxwallet.app.core.ui.luxViewModel
                     val balances = listOf(AccountProvider.BCA to bca, AccountProvider.SEABANK to seabank, AccountProvider.GOPAY to gopay, AccountProvider.SHOPEEPAY to shopee, AccountProvider.CASH to cash)
                         .mapNotNull { (provider, value) -> value.toLongOrNull()?.let { provider to it } }.toMap()
                     vm.finish(balances, sources.map { SourceApp.valueOf(it) }.toSet(), income.toLongOrNull() ?: 0, bills.toLongOrNull() ?: 0,
-                        savings.toLongOrNull() ?: 0, investment.toLongOrNull() ?: 0)
+                        savings.toLongOrNull() ?: 0, investment.toLongOrNull() ?: 0, profileName)
                 }) { Text(if (saving) "Menyimpan…" else "Simpan & buka Beranda") }
             }
         }

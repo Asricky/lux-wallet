@@ -7,28 +7,55 @@ import androidx.compose.foundation.Image
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.imageResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import com.luxwallet.app.R
 import com.luxwallet.app.engine.PaydayStatus
 
-enum class LumiMood { CALM, HAPPY, FOCUS }
+enum class LumiMood { CALM, HAPPY, FOCUS, PROUD, EXCITED, CURIOUS, NERVOUS, SHOCKED, SAD, ANGRY }
+fun budgetMood(percent: Double, completed: Boolean = false): LumiMood = when {
+    percent > 120 -> LumiMood.ANGRY
+    percent > 100 -> LumiMood.SAD
+    percent >= 75 -> LumiMood.NERVOUS
+    completed -> LumiMood.PROUD
+    percent <= 50 -> LumiMood.HAPPY
+    else -> LumiMood.CALM
+}
 fun lumiMood(status: PaydayStatus?): LumiMood = when {
-    status == null -> LumiMood.CALM
-    status.expired || status.freeRemaining < 0 || status.remainingToday < 0 -> LumiMood.FOCUS
-    else -> LumiMood.HAPPY
+    status == null || status.expired -> LumiMood.CALM
+    status.freeRemaining < 0 || (status.dailyBudget <= 0 && status.spentToday > 0) -> LumiMood.ANGRY
+    status.dailyBudget <= 0 -> LumiMood.CALM
+    else -> budgetMood(status.usedPercent)
+}
+/** Evidence is ordered: serious budget risk, review, spike, recent income, then daily progress. */
+fun companionMood(status: PaydayStatus?, review: Boolean, spike: Boolean, income: Boolean, completed: Boolean = false): LumiMood = when {
+    status != null && !status.expired && (status.freeRemaining < 0 || status.usedPercent > 100 || (status.dailyBudget <= 0 && status.spentToday > 0)) -> lumiMood(status)
+    review -> LumiMood.CURIOUS
+    spike -> LumiMood.SHOCKED
+    income -> LumiMood.EXCITED
+    completed -> LumiMood.PROUD
+    else -> lumiMood(status)
 }
 @Composable fun Lumi(mood: LumiMood = LumiMood.CALM, modifier: Modifier = Modifier) {
-    Image(painterResource(when (mood) {
-        LumiMood.CALM -> R.drawable.ic_launcher_foreground
-        LumiMood.HAPPY -> R.drawable.lumi_happy
-        LumiMood.FOCUS -> R.drawable.lumi_focus
-    }), "Lumi, penguin pendamping keuangan", modifier)
+    val atlas = androidx.compose.ui.graphics.ImageBitmap.imageResource(R.drawable.lumi_emotions)
+    val cell = when(mood) {
+        LumiMood.HAPPY -> 0; LumiMood.PROUD -> 1; LumiMood.CALM -> 2
+        LumiMood.EXCITED -> 3; LumiMood.CURIOUS -> 4; LumiMood.NERVOUS, LumiMood.FOCUS -> 5
+        LumiMood.SHOCKED -> 6; LumiMood.SAD -> 7; LumiMood.ANGRY -> 8
+    }
+    androidx.compose.foundation.Canvas(modifier.semantics { contentDescription = "Lumi · ${mood.name.lowercase()}" }) {
+        drawImage(atlas, srcOffset = androidx.compose.ui.unit.IntOffset(cell % 3 * (atlas.width / 3), cell / 3 * (atlas.height / 3)),
+            srcSize = androidx.compose.ui.unit.IntSize(atlas.width / 3, atlas.height / 3),
+            dstSize = androidx.compose.ui.unit.IntSize(size.width.toInt(), size.height.toInt()))
+    }
 }
 object LumiLauncher {
     private val names = listOf("LumiCalm", "LumiHappy", "LumiFocus")
     fun apply(context: Context, mood: LumiMood) {
         val manager = context.packageManager
         val components = names.map { ComponentName(context.packageName, "com.luxwallet.app.$it") }
-        val target = components[mood.ordinal]
+        val target = components[when(mood) { LumiMood.HAPPY, LumiMood.PROUD, LumiMood.EXCITED -> 1; LumiMood.CALM, LumiMood.CURIOUS -> 0; else -> 2 }]
         if (manager.getComponentEnabledSetting(target) == PackageManager.COMPONENT_ENABLED_STATE_ENABLED) return
         // Enable the new icon first so older launchers never see zero launchable components.
         manager.setComponentEnabledSetting(target, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP)

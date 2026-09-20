@@ -18,7 +18,7 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 @Composable fun TransactionCard(transaction: TransactionEntity, sourceAccountName: String?, destinationAccountName: String?,
-    categoryName: String?, onClick: () -> Unit, modifier: Modifier = Modifier, hideAmounts: Boolean = false) {
+    categoryName: String?, onClick: () -> Unit, modifier: Modifier = Modifier, hideAmounts: Boolean = com.luxwallet.app.core.common.LocalAmountsHidden.current) {
     val tx = transaction
     val colors = LocalLuxSemanticColors.current
     val date = Instant.ofEpochMilli(tx.transactionTime).atZone(ZoneId.systemDefault())
@@ -33,7 +33,7 @@ import java.util.Locale
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(if (tx.isInternalTransfer) "${sourceAccountName ?: "Rekening"} → ${destinationAccountName ?: "Rekening"}"
                     else tx.merchantName ?: tx.counterpartyName ?: categoryName ?: "Transaksi", style = MaterialTheme.typography.titleSmall)
-                Text(if (hideAmounts) "Rp ••••••" else AmountFormat.rupiah(tx.amount), color = color, style = MaterialTheme.typography.titleMedium)
+                Text(if (hideAmounts) "********" else AmountFormat.rupiah(tx.amount), color = color, style = MaterialTheme.typography.titleMedium)
                 Text(if (tx.isInternalTransfer) "Pindah saldo sendiri" else "${sourceAccountName ?: "Belum ada rekening"} · ${categoryName ?: "Belum dikategorikan"}",
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 if (held) Text("Calon duplikat · belum dihitung", color = colors.warning, style = MaterialTheme.typography.labelSmall)

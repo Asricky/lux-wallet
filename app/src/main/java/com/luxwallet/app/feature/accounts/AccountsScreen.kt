@@ -52,7 +52,7 @@ fun AccountsScreen() {
                 Column(Modifier.padding(12.dp)) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text(account.name, fontWeight = FontWeight.Medium)
-                        Text(AmountFormat.rupiah(account.currentEstimatedBalance), style = MaterialTheme.typography.titleMedium)
+                        Text(com.luxwallet.app.core.common.privateRupiah(account.currentEstimatedBalance), style = MaterialTheme.typography.titleMedium)
                     }
                     Text("${account.kind.name} • ${account.provider.name}", style = MaterialTheme.typography.bodyMedium)
                     Row(verticalAlignment = Alignment.CenterVertically) {
