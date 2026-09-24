@@ -41,16 +41,16 @@ class CoachNotificationTest {
     }
     @Test fun changingMascotAlwaysLeavesExactlyOneLauncherEnabled() {
         val context = ApplicationProvider.getApplicationContext<android.app.Application>()
-        val names = listOf("LumiCalm", "LumiHappy", "LumiFocus")
+        val names = LumiLauncher.names
         assertNotNull(context.packageManager.getLaunchIntentForPackage(context.packageName))
         LumiMood.entries.forEach { mood ->
             LumiLauncher.apply(context, mood)
             val enabled = names.filter { name -> context.packageManager.getComponentEnabledSetting(
                 ComponentName(context.packageName, "com.luxwallet.app.$name")) == PackageManager.COMPONENT_ENABLED_STATE_ENABLED }
-            assertEquals(listOf(names[when(mood) { LumiMood.HAPPY, LumiMood.PROUD, LumiMood.EXCITED -> 1; LumiMood.CALM, LumiMood.CURIOUS -> 0; else -> 2 }]), enabled)
+            assertEquals(listOf(LumiLauncher.alias(mood)), enabled)
             val launcherIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)
             assertNotNull(launcherIntent)
-            assertEquals("com.luxwallet.app.${names[when(mood) { LumiMood.HAPPY, LumiMood.PROUD, LumiMood.EXCITED -> 1; LumiMood.CALM, LumiMood.CURIOUS -> 0; else -> 2 }]}", launcherIntent!!.component!!.className)
+            assertEquals("com.luxwallet.app.${LumiLauncher.alias(mood)}", launcherIntent!!.component!!.className)
         }
     }
 }

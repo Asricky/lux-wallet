@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<inset xmlns:android="http://schemas.android.com/apk/res/android" android:inset="16.6667%">
+    <inset android:insetLeft="-125.49020%" android:insetTop="-226.64835%"
+        android:insetRight="-125.77031%" android:insetBottom="-17.85714%">
+        <bitmap android:src="@drawable/lumi_covers" android:gravity="fill" android:filter="true" />
+    </inset>
+</inset>

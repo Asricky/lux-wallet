@@ -50,13 +50,13 @@ class AssetsViewModel(
     fun saveValue(accountId: Long?, asset: AssetEntity?, liability: LiabilityEntity?, name: String,
                   assetClass: com.luxwallet.app.core.model.AssetClass, value: Long, onSaved: () -> Unit) {
         if (saving.value) return
-        if (value < 0 || (accountId == null && name.isBlank())) { error.value = "Isi nama dan nominal yang valid."; return }
+        if (value < 0 || name.isBlank()) { error.value = "Isi nama dan nominal yang valid."; return }
         saving.value = true
         error.value = null
         viewModelScope.launch {
             try {
                 when {
-                    accountId != null -> transactionRepository.setAccountBalance(accountId, value)
+                    accountId != null -> transactionRepository.updateAccountValue(accountId, name, value)
                     liability != null -> liabilityRepository.upsert(liability.copy(name = name, currentOutstanding = value, updatedAt = System.currentTimeMillis()))
                     else -> assetRepository.upsert(asset?.copy(name = name, assetClass = assetClass, currentValue = value, updatedAt = System.currentTimeMillis())
                         ?: AssetEntity(name = name, assetClass = assetClass, currentValue = value, updatedAt = System.currentTimeMillis()))
@@ -64,6 +64,21 @@ class AssetsViewModel(
                 onSaved()
             } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
             catch (_: Exception) { error.value = "Belum tersimpan. Periksa nominal dan coba lagi." }
+            finally { saving.value = false }
+        }
+    }
+
+    fun archive(accountId: Long?, asset: AssetEntity?, onSaved: () -> Unit) {
+        if (saving.value) return
+        saving.value = true
+        error.value = null
+        viewModelScope.launch {
+            try {
+                if (accountId != null) accountRepository.setActive(accountId, false)
+                else if (asset != null) assetRepository.delete(asset)
+                onSaved()
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) { error.value = "Aset belum diarsipkan. Coba lagi." }
             finally { saving.value = false }
         }
     }

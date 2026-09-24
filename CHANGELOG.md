@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.0.5 — 2026-09-24
+
+- Sembilan cover dan ikon Lumi dari Lumi-app-cover.png, mengikuti transaksi aktual, budget, dan pencapaian; alias launcher lama tetap tersedia saat upgrade.
+- Simpan & konfirmasi atau abaikan duplikat langsung kembali ke Beranda; Food & Drink selalu di urutan pertama. Catatan tanpa rekening dapat ditinjau dengan memilih rekening aktif.
+- Kalender mendapat kartu Masuk/Keluar/Selisih, grafik Tren Pengeluaran per bulan dengan pemilih tanggal, serta rekomendasi budget tanpa mengubah target tersimpan.
+- Rencana sampai gajian diringkas menjadi kartu saldo, hari tersisa, safe to spend, budget, pemakaian, penyangga, dan proyeksi saldo. Saran Lumi memakai satu insight utama dan maksimal dua pendukung.
+- Perlu ditinjau memiliki aksi Tinjau/Hapus dengan konfirmasi. Aset dan rekening bisa diedit, diarsipkan, serta dipulihkan tanpa menghapus histori.
+- Pemulihan listener saat disconnect, startup, boot, dan update; percobaan terbatas dengan jeda bertahap. Pengaturan menampilkan status koneksi, waktu notifikasi terakhir, dan aktivitas parser.
+- Deduplikasi lintas BCA mobile/myBCA memakai bukti referensi atau identitas kejadian. Kemiripan yang belum pasti ditahan tanpa ledger tambahan; transaksi berbeda tetap dicatat.
+- Migrasi Room v5 menambah status arsip aset tanpa menghapus saldo, transaksi, ledger, atau rencana. README dan tautan APK terbaru tetap diperbarui otomatis setiap rilis.
+
+
 ## 1.0.4 — 2026-09-20
 
 - Tampilan teal/mint, sapaan nama dari profil, sembilan ekspresi Lumi, dan ikon launcher baru dari referensi Lumi.

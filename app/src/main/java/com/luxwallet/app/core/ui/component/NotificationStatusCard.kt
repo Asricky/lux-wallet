@@ -26,13 +26,13 @@ import com.luxwallet.app.notification.NotificationAccess
     }
     OutlinedCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(if (!granted) "Aktifkan pencatatan otomatis" else if (connected) "Pemantauan notifikasi aktif" else "Menunggu koneksi notifikasi",
+            Text(if (!granted) "Perlu izin · Permission Required" else if (connected) "Aktif · Active" else "Terputus · Inactive",
                 style = MaterialTheme.typography.titleSmall)
             Text(error ?: if (connected) "Notifikasi baru dari sumber pilihanmu dicatat di perangkat ini."
                 else "Izinkan akses notifikasi untuk mencatat transaksi bank dan e-wallet.", style = MaterialTheme.typography.bodySmall)
             if (!granted || !connected || error != null) {
                 TextButton(onClick = {
-                    if (granted) NotificationAccess.requestRebind(context)
+                    if (granted) com.luxwallet.app.notification.ListenerRecovery.enqueue(context)
                     context.startActivity(NotificationAccess.settingsIntent())
                 }) { Text(if (granted) "Sambungkan ulang" else "Buka akses notifikasi") }
             }

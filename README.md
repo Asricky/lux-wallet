@@ -1,35 +1,36 @@
 # Lux Wallet
 
-Aplikasi Android untuk memantau keuangan pribadi melalui notifikasi **myBCA, SeaBank, ShopeePay, dan GoPay**. Data diproses di perangkat, dapat digunakan offline, tanpa login rekening atau backend.
+Aplikasi Android untuk memantau keuangan pribadi melalui notifikasi **BCA mobile/myBCA, SeaBank, ShopeePay, dan GoPay**. Data diproses di perangkat, dapat digunakan offline, tanpa login rekening atau backend.
 
 Kenali **Lumi**, karakter teal dengan aksen emas, pendamping keuanganmu. Lux Wallet menyediakan tema terang/gelap, kalender pemasukan/pengeluaran, rencana saldo sampai gajian, serta saran dan pengingat lokal.
 
-<img src="app/src/main/res/drawable-nodpi/lumi_launcher.png" width="120" alt="Lumi, maskot Lux Wallet" />
+<img src="Lumi-app-cover.png" width="360" alt="Sembilan cover Lumi, maskot Lux Wallet" />
 
 Spesifikasi produk: [PRD.md](PRD.md) · Panduan tampilan: [DESIGN.md](DESIGN.md).
 
 <!-- LATEST_RELEASE_START -->
 ## Download APK terbaru
 
-[**Download app-debug-v4.apk**](https://github.com/Asricky/lux-wallet/raw/refs/heads/main/app/build/outputs/apk/debug/app-debug-v4.apk)
+[**Download app-debug-v5.apk**](https://github.com/Asricky/lux-wallet/raw/refs/heads/main/app/build/outputs/apk/debug/app-debug-v5.apk)
 
-Versi terbaru: **v4 (1.0.4)**. Android 10 atau lebih baru.
+Versi terbaru: **v5 (1.0.5)**. Android 10 atau lebih baru.
 
-Lokasi file: `lux-wallet\app\build\outputs\apk\debug\app-debug-v4.apk`.
+Lokasi file: `lux-wallet\app\build\outputs\apk\debug\app-debug-v5.apk`.
 
 Semua versi sebelumnya tersedia di [folder APK debug](app/build/outputs/apk/debug). Nama launcher tetap **Lux Wallet**.
 
-SHA-256: `6EB0592EDC43299E1229918D78B9476263119D97C3BFC63B93CE3C0A5FDEE266`
+SHA-256: `410BC10C2C7CFBEE7C7ED42C5FE87FBB8DDDE89561F63267C8309E9E8618D0D7`
 
-### Pembaruan v4
+### Pembaruan v5
 
-- Tampilan teal/mint, sapaan nama dari profil, sembilan ekspresi Lumi, dan ikon launcher baru dari referensi Lumi.
-- Tab menyimpan posisi/pilihan tanpa fade dan tanpa memulihkan formulir lama; CTA memakai chevron yang konsisten.
-- Nominal tersembunyi memakai `********` pada saldo, aset, arus kas, transaksi, target, dan hasil simulasi.
-- Kalender menampilkan arus kas harian bertanda, misalnya +100K atau −1.25M, terpisah dari hasil terhadap budget.
-- Konfirmasi transaksi Android dengan antrean persisten, filter per jenis, tautan detail, snackbar, serta peringatan budget.
-- Migrasi Room v4 mempertahankan ledger dan saldo; transfer memakai satu konfirmasi. Pembaruan notifikasi setelah transfer digabung tetap melekat pada transaksi yang sama.
-- README diperbarui otomatis oleh proses rilis: link unduh terbaru, versi, checksum APK, dan catatan perubahan dari changelog.
+- Sembilan cover dan ikon Lumi dari Lumi-app-cover.png, mengikuti transaksi aktual, budget, dan pencapaian; alias launcher lama tetap tersedia saat upgrade.
+- Simpan & konfirmasi atau abaikan duplikat langsung kembali ke Beranda; Food & Drink selalu di urutan pertama. Catatan tanpa rekening dapat ditinjau dengan memilih rekening aktif.
+- Kalender mendapat kartu Masuk/Keluar/Selisih, grafik Tren Pengeluaran per bulan dengan pemilih tanggal, serta rekomendasi budget tanpa mengubah target tersimpan.
+- Rencana sampai gajian diringkas menjadi kartu saldo, hari tersisa, safe to spend, budget, pemakaian, penyangga, dan proyeksi saldo. Saran Lumi memakai satu insight utama dan maksimal dua pendukung.
+- Perlu ditinjau memiliki aksi Tinjau/Hapus dengan konfirmasi. Aset dan rekening bisa diedit, diarsipkan, serta dipulihkan tanpa menghapus histori.
+- Pemulihan listener saat disconnect, startup, boot, dan update; percobaan terbatas dengan jeda bertahap. Pengaturan menampilkan status koneksi, waktu notifikasi terakhir, dan aktivitas parser.
+- Deduplikasi lintas BCA mobile/myBCA memakai bukti referensi atau identitas kejadian. Kemiripan yang belum pasti ditahan tanpa ledger tambahan; transaksi berbeda tetap dicatat.
+- Migrasi Room v5 menambah status arsip aset tanpa menghapus saldo, transaksi, ledger, atau rencana. README dan tautan APK terbaru tetap diperbarui otomatis setiap rilis.
 <!-- LATEST_RELEASE_END -->
 
 ## Instalasi dan mulai memakai
@@ -109,6 +110,33 @@ Buka **Pengaturan → Notifikasi → Konfirmasi transaksi & peringatan budget**,
 Konfirmasi memakai channel **Lux Wallet Transactions**. Notifikasi biasa dikirim setelah pencatatan tersimpan. Transfer otomatis menunggu pasangan selama jendela pencocokan 30 menit sejak dicatat; pasangan yang cocok mempercepat konfirmasi. Batas baterai Android bisa menunda pengiriman. Jika pasangan baru tiba setelah konfirmasi terkirim, ledger tetap digabung tanpa mengirim konfirmasi kedua. Ketuk notifikasi untuk membuka detail setelah melewati kunci aplikasi. Mode hide tidak mengirim nominal; layar kunci selalu memakai pesan umum. Pemberitahuan yang terlewat karena izin/filter mati tidak diputar ulang.
 
 Lumi menyesuaikan ekspresi dengan penggunaan budget, transaksi yang perlu diperiksa, pemasukan terbaru, atau lonjakan transaksi terhadap catatan minggu terakhir. Hari yang selesai dalam budget dapat menampilkan Lumi bangga. Sisa anggaran adalah kesempatan menabung, bukan pemasukan baru. Peringatan budget muncul pada ambang 75%, lewat 100%, dan lewat 120%, masing-masing maksimal sekali per hari; tampil sebagai satu kartu per hari.
+
+## Kalender, rencana, dan rekomendasi budget
+
+Kalender menampilkan kartu Masuk/Keluar/Selisih serta arus kas harian bertanda. Grafik **Tren Pengeluaran** mengikuti bulan yang dipilih dan hanya menampilkan tanggal yang sudah berjalan. Ketuk titik atau geser pemilih tanggal untuk melihat nominal dan transaksi hari tersebut. Mode sembunyikan nominal juga menutup grafik.
+
+**Saran budget hari ini** selalu bertanggal hari ini, termasuk saat melihat kalender bulan lain. Empat angka dibedakan: rekomendasi per hari, budget tersimpan, sisa budget hari ini, dan aman dibelanjakan. Rekomendasi tidak mengubah anggaran tersimpan atau memindahkan uang.
+
+Perhitungan menggunakan nilai lebih rendah antara sisa saldo snapshot rencana dan total estimasi rekening aktif (jika tersedia). Pemasukan/pengeluaran aktual sudah masuk snapshot berjalan sehingga tidak ditambahkan dua kali. Cadangan tagihan/transportasi yang belum terpakai, penyangga, modal bisnis, dan investasi tetap dilindungi. Dana bebas bersama pemakaian hari ini dibagi sisa hari. Aman dibelanjakan dibatasi sisa target harian dan rekomendasi; perkiraan gaji tanggal 25/1 tidak dianggap uang tersedia. Jika saldo rekening belum sesuai, koreksi melalui Aset lalu konfirmasi rencana baru.
+
+Rencana sampai gajian menampilkan ringkasan visual dan proyeksi saldo sebelum pemasukan. Proyeksi mengasumsikan pemakaian sisa budget serta cadangan tagihan/transportasi; ini simulasi, bukan saldo bank yang terverifikasi. Rincian alokasi/jadwal dapat dibuka. Saran Lumi menampilkan satu insight utama dan paling banyak dua angka pendukung; pengingat, ikon, dan edukasi investasi ada dalam bagian yang bisa dibuka.
+
+## Peninjauan, aset, dan perlindungan transaksi ganda
+
+- **Tinjau** membuka detail untuk memilih kategori, mengedit catatan, dan menyimpan. Food & Drink berada paling atas. Simpan/abaikan yang berhasil langsung kembali ke Beranda dengan data terbaru.
+- **Hapus** di daftar peninjauan meminta konfirmasi, mengabaikan catatan, dan membalik pengaruh saldo jika sebelumnya sudah dihitung. Bukti dan histori tetap tersimpan.
+- Notifikasi yang belum dikenali dapat dibaca untuk dicatat manual bila valid; nilainya belum masuk saldo otomatis. Catatan tanpa rekening harus dipasangkan dengan rekening aktif yang benar. Transaksi sebelum saldo awal perlu diabaikan karena sudah tercakup saldo awal.
+- Ketuk aset/rekening untuk mengedit nama dan nilai. **Hapus dari aset aktif** mengarsipkannya. Aset manual dipulihkan dari **Arsip aset**; rekening dari **Kelola / tambah rekening → Aktifkan kembali**. Koreksi rekening tetap memakai ledger penyesuaian, bukan pemasukan.
+- Lintas BCA mobile/myBCA: rekening tunggal, nominal, arah, jenis, waktu, referensi, nama pihak, serta isi notifikasi diperiksa. Referensi identik atau identitas kejadian yang kuat digabung menjadi satu transaksi dengan beberapa observation. Nama/nominal saja tidak cukup untuk menghapus transaksi.
+- Kemiripan dalam 30 detik tanpa bukti kuat menjadi calon duplikat **belum dihitung**. Abaikan bila satu pembayaran; konfirmasi sebagai transaksi berbeda bila memang dua pembayaran. Referensi berbeda, pihak berbeda, atau waktu berjauhan tetap dipisahkan. Bila beberapa rekening memakai provider sama, pilih rekening saat peninjauan; aplikasi tidak menebak rekening pertama.
+
+## Pemulihan pemantau dan ikon Lumi
+
+Pengaturan pemantauan membedakan **Aktif / Terputus / Perlu izin**, disertai waktu notifikasi diterima dan parser terakhir. Listener terpisah dari Activity. Notifikasi yang sudah diterima dipersistenkan melalui scope aplikasi; antrean parser dapat dilanjutkan setelah restart. Disconnect, startup proses, boot, dan update meminta rebind bila izin masih ada, disusul maksimal tiga percobaan dengan backoff. Tidak ada polling service atau foreground service terus-menerus.
+
+Android tetap mengendalikan binding dan penghematan baterai. Setelah **Paksa berhenti**, buka aplikasi kembali. Notifikasi yang hilang sebelum diterima dan tidak tersedia lagi di Android tidak dapat dipulihkan dari bank. Uji otomatis menggunakan Robolectric; perilaku OEM dan launcher HP fisik tetap perlu diverifikasi pada perangkat pengguna.
+
+Sembilan ikon berasal dari [Lumi-app-cover.png](Lumi-app-cover.png). Pilih **Saran Lumi → Pengingat & ikon Lumi**: otomatis atau satu ekspresi tetap. Mode otomatis diperbarui dari data lokal selama proses aplikasi hidup; tidak membangunkan perangkat hanya untuk mengganti ikon. Alias baru diaktifkan sebelum alias lain dinonaktifkan, tanpa membunuh proses. Launcher dapat menyimpan cache ikon sesaat. Alias tiga versi lama tetap dideklarasikan agar update tidak memutus pintasan lama.
 
 ## Arsip perubahan v3
 
@@ -214,9 +242,9 @@ Lihat [panduan investasi dan pemisahan dana bisnis](docs/investasi.md). Tidak ad
 .\gradlew.bat testDebugUnitTest lintDebug
 ```
 
-Suite mencakup parser dan ledger, duplikasi Rp3, migrasi Room dari v1/v2/v3 ke v4, navigasi dan tombol kembali, alur catat transaksi sebenarnya, format rupiah/cursor, rencana gajian, cadangan transportasi/tagihan, kalender historis, izin/privasi notifikasi, ikon launcher, serta render tema terang/gelap.
+Suite mencakup parser dan ledger, duplikasi Rp3, migrasi Room dari v1/v2/v3/v4 ke v5, navigasi dan tombol kembali, alur catat transaksi sebenarnya, format rupiah/cursor, rencana gajian, cadangan transportasi/tagihan, kalender historis, izin/privasi notifikasi, ikon launcher, serta render tema terang/gelap.
 
-Validasi v4: 115 pengujian unit/integrasi/UI lulus, Android Lint tanpa error, render Beranda/Kalender terang–gelap dan Aset/Pengaturan Notifikasi pada layar 320 dp diperiksa. Belum diverifikasi pada HP fisik dalam revisi ini. Format notifikasi dapat berubah antar versi aplikasi bank. GoPay tetap ditandai untuk ditinjau karena belum tersedia sampel notifikasi asli yang terkalibrasi. Penggabungan/pemisahan transaksi secara manual belum tersedia.
+Validasi v5: **137 pengujian unit/integrasi/UI lulus**; build APK berhasil; Android Lint **0 error, 13 warning** (kompatibilitas resource/ikon, resource lama, dan parameter komponen). Render sembilan launcher, Beranda/Kalender terang–gelap, serta Planner/Coach/Tren pada layar 320 dp diperiksa. Alur konfirmasi/abaikan kembali Beranda, arsip aset, rekomendasi, BCA lintas aplikasi, dan pemulihan listener tanpa Activity turut diuji. Belum diverifikasi pada HP fisik dalam revisi ini. Format notifikasi dapat berubah antar versi aplikasi bank. GoPay tetap ditandai untuk ditinjau karena belum tersedia sampel notifikasi asli yang terkalibrasi. Penggabungan/pemisahan transaksi secara manual belum tersedia.
 
 ## Privasi dan cadangan
 

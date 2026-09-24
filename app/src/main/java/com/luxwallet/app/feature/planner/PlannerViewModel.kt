@@ -13,8 +13,9 @@ import java.time.LocalDate
 data class PlannerState(
     val plans: List<PaydayPlan> = emptyList(), val transactions: List<TransactionEntity> = emptyList(),
     val transportIds: Set<Long> = emptySet(), val billIds: Set<Long> = emptySet(),
-    val accountCash: Long = 0, val today: LocalDate = LocalDate.now(), val loaded: Boolean = false
+    val accountCash: Long = 0, val today: LocalDate = LocalDate.now(), val loaded: Boolean = false, val hasAccounts: Boolean = false
 ) {
+    val adaptive get() = AdaptiveBudgetEngine.calculate(status, accountCash.takeIf { hasAccounts }, today)
     val latest get() = plans.maxByOrNull { it.capturedAt }
     val status get() = latest?.let { PaydayMath.status(it, transactions, transportIds, billIds, today) }
 }
@@ -24,7 +25,7 @@ class PlannerViewModel(private val app: LuxWalletApp) : ViewModel() {
         app.categoryRepository.observeAll(), app.accountRepository.observeActiveAccounts(), date) { plans, txs, categories, accounts, today ->
         PlannerState(plans, txs, categories.filter { it.name == TransportPlan.CATEGORY }.map { it.id }.toSet(),
             categories.filter { it.name == PaydayPlan.BILLS_CATEGORY }.map { it.id }.toSet(),
-            accounts.filter { it.isOwnedByUser }.sumOf { it.currentEstimatedBalance }, today, true)
+            accounts.filter { it.isOwnedByUser }.sumOf { it.currentEstimatedBalance }, today, true, accounts.any { it.isOwnedByUser })
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), PlannerState())
     val saving = MutableStateFlow(false)
     val message = MutableStateFlow<String?>(null)

@@ -40,6 +40,7 @@ class NotificationProcessingWorker(appContext: Context, params: WorkerParameters
                 postedAt = observation.postedAt
             )
 
+            app.preferences.recordParserActivity(System.currentTimeMillis())
             when (val result = registry.parse(input)) {
                 is ParseResult.Parsed -> {
                     app.transactionRepository.ingest(observation, result.candidate)

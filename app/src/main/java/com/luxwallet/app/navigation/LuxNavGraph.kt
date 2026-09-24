@@ -50,11 +50,11 @@ fun LuxNavGraph(navController: NavHostController, startDestination: String = Lux
             arguments = listOf(navArgument("transactionId") { type = NavType.LongType })
         ) { backStackEntry ->
             val id = backStackEntry.arguments?.getLong("transactionId") ?: 0L
-            TransactionDetailScreen(transactionId = id)
+            TransactionDetailScreen(transactionId = id, onDone = { navController.openScreen(LuxDestinations.HOME) })
         }
 
         composable(LuxDestinations.NEEDS_REVIEW) {
-            NeedsReviewScreen(onTransactionClick = { id -> navController.openScreen(LuxDestinations.transactionDetail(id)) })
+            NeedsReviewScreen(onTransactionClick = { id -> navController.openScreen(LuxDestinations.transactionDetail(id)) }, onManual = { navController.openScreen(LuxDestinations.QUICK_ADD) })
         }
         composable(LuxDestinations.BUDGETS_GOALS) { BudgetGoalsScreen() }
         composable(LuxDestinations.INSIGHTS) { InsightsScreen() }

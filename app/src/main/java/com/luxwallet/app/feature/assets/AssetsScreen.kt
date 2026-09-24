@@ -31,8 +31,11 @@ import kotlinx.coroutines.launch
     val error by vm.error.collectAsState()
     val app = LocalContext.current.applicationContext as LuxWalletApp
     val hidden by app.preferences.amountsHidden.collectAsState(initial = true)
+    val archived by app.assetRepository.observeArchived().collectAsState(initial = emptyList())
+    var showArchived by rememberSaveable { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     var tab by rememberSaveable { mutableStateOf(0) }
+    var confirmArchive by rememberSaveable { mutableStateOf(false) }
     var edit by rememberSaveable { mutableStateOf<String?>(null) }
     var name by rememberSaveable { mutableStateOf("") }
     var amount by rememberSaveable { mutableStateOf("") }
@@ -95,13 +98,26 @@ import kotlinx.coroutines.launch
                 item { OutlinedButton({ open("newDebt", "", 0) }, Modifier.fillMaxWidth()) { Text("Tambah utang") } }
             }
         }
+        if (archived.isNotEmpty()) {
+            item { TextButton({ showArchived = !showArchived }) { Text("Arsip aset (${archived.size})") } }
+            if (showArchived) items(archived, key = { "archive-${it.id}" }) { item ->
+                OutlinedCard(Modifier.fillMaxWidth()) { Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(item.name, Modifier.weight(1f))
+                    TextButton({ scope.launch {
+                        try { app.assetRepository.restore(item.id) }
+                        catch (e: kotlinx.coroutines.CancellationException) { throw e }
+                        catch (_: Exception) { vm.error.value = "Belum dapat dipulihkan. Coba lagi." }
+                    } }) { Text("Pulihkan") }
+                } }
+            }
+        }
+        error?.let { item { Text(it, color = MaterialTheme.colorScheme.error) } }
         item { Text("Ketuk aset untuk mengubah nominal. Perubahan saldo rekening dicatat sebagai penyesuaian, sehingga tidak menjadi pemasukan atau pengeluaran.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
     }
     if (edit != null) ModalBottomSheet(onDismissRequest = { if (!saving) edit = null }) {
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).imePadding().padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Text(if (edit == "new") "Tambah aset" else if (edit == "newDebt") "Tambah utang" else "Ubah nominal", style = MaterialTheme.typography.titleLarge)
-            if (account != null) Text(account.name, style = MaterialTheme.typography.titleMedium)
-            else OutlinedTextField(name, { name = it }, Modifier.fillMaxWidth(), label = { Text("Nama") }, singleLine = true)
+            OutlinedTextField(name, { name = it }, Modifier.fillMaxWidth(), label = { Text("Nama") }, singleLine = true)
             if (account == null && liability == null) {
                 val types = AssetClass.entries.filter { it !in setOf(AssetClass.BANK, AssetClass.EWALLET, AssetClass.CASH) }
                 ChoiceField("Jenis aset", assetClass.label(), types.map { it.label() }, { assetClass = types[it] })
@@ -114,8 +130,16 @@ import kotlinx.coroutines.launch
                 if (value == null || value < 0) vm.error.value = "Isi nominal nol atau positif yang valid."
                 else vm.saveValue(account?.id, asset, liability, name, assetClass, value) { edit = null }
             }) { Text(if (saving) "Menyimpan…" else "Simpan nilai") }
+            if (account != null || asset != null) TextButton({ confirmArchive = true }, enabled = !saving, modifier = Modifier.fillMaxWidth()) {
+                Icon(Icons.Outlined.Archive, null); Spacer(Modifier.width(8.dp)); Text("Hapus dari aset aktif")
+            }
         }
     }
+    if (confirmArchive) AlertDialog(onDismissRequest = { if (!saving) confirmArchive = false },
+        title = { Text("Arsipkan aset ini?") },
+        text = { Text("Aset tidak lagi masuk total kekayaan. Riwayat transaksi tetap tersimpan. Rekening dapat diaktifkan kembali lewat Kelola rekening.") },
+        confirmButton = { TextButton(enabled = !saving, onClick = { vm.archive(account?.id, asset) { confirmArchive = false; edit = null } }) { Text("Arsipkan") } },
+        dismissButton = { TextButton({ confirmArchive = false }, enabled = !saving) { Text("Batal") } })
 }
 private fun AssetClass.label() = when (this) {
     AssetClass.REKSA_DANA -> "Reksa dana"; AssetClass.OBLIGASI_SBN -> "Obligasi / SBN"; AssetClass.SAHAM -> "Saham"

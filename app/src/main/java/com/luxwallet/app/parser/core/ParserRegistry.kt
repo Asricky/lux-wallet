@@ -21,6 +21,10 @@ class ParserRegistry(
         }
         val parser = parsers[input.sourceApp]
             ?: return ParseResult.Failed("No parser registered for ${input.sourceApp}")
+        if (!parser.canParse(input) && input.sourceApp == SourceApp.MYBCA) {
+            val fallback = com.luxwallet.app.parser.mybca.BcaMobileNotificationParser()
+            if (fallback.canParse(input)) return fallback.parse(input)
+        }
         if (!parser.canParse(input)) {
             return if (Regex("(?i)(rp\\s*\\d|idr\\s*\\d)").containsMatchIn(input.combinedText) &&
                 Regex("(?i)(pembayaran|transfer|pemasukan|pengeluaran|diterima|saldo)").containsMatchIn(input.combinedText))
@@ -30,6 +34,6 @@ class ParserRegistry(
     }
 
     companion object {
-        const val PARSER_VERSION = 2
+        const val PARSER_VERSION = 3
     }
 }

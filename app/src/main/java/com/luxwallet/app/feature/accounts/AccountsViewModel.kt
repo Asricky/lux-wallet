@@ -45,11 +45,23 @@ class AccountsViewModel(private val accountRepository: AccountRepository) : View
     }
 
     fun setIncludeInNetWorth(account: AccountEntity, include: Boolean) {
-        viewModelScope.launch { accountRepository.update(account.copy(includeInNetWorth = include)) }
+        change { accountRepository.setIncludeInNetWorth(account.id, include) }
     }
 
     fun setActive(account: AccountEntity, active: Boolean) {
-        viewModelScope.launch { accountRepository.update(account.copy(isActive = active)) }
+        change { accountRepository.setActive(account.id, active) }
+    }
+
+    private fun change(action: suspend () -> Unit) {
+        if (saving.value) return
+        saving.value = true
+        error.value = null
+        viewModelScope.launch {
+            try { action() }
+            catch (e: kotlinx.coroutines.CancellationException) { throw e }
+            catch (_: Exception) { error.value = "Perubahan rekening belum tersimpan. Coba lagi." }
+            finally { saving.value = false }
+        }
     }
 
     companion object {

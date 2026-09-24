@@ -1,6 +1,6 @@
 # Lux Wallet — Product Requirements Document
 
-Versi produk: **v3 / 1.0.3** · Revisi: **19 September 2026**
+Versi produk: **v5 / 1.0.5** · Revisi: **24 September 2026**
 Platform: Android 10+ · Bahasa: Indonesia · Pemilik repo: Asricky
 
 Dokumen ini menjadi spesifikasi produk aktif. Arah tampilan dan komponen ada di [DESIGN.md](DESIGN.md), petunjuk instalasi di [README.md](README.md).
@@ -36,7 +36,7 @@ Rekening dan profil disimpan pada langkah terakhir dalam transaksi database. Pen
 
 ## 4. Sumber, parsing, dan bukti
 
-Sumber bawaan: myBCA, SeaBank, ShopeePay, GoPay. Hanya paket yang diizinkan diproses. Paket tambahan memerlukan pemetaan eksplisit dari diagnostik. Notifikasi Lux Wallet sendiri tidak menjadi sumber keuangan.
+Sumber bawaan: BCA mobile/myBCA, SeaBank, ShopeePay, GoPay. Hanya paket yang diizinkan diproses. Paket tambahan memerlukan pemetaan eksplisit dari diagnostik. Notifikasi Lux Wallet sendiri tidak menjadi sumber keuangan.
 
 Observation menyimpan sumber, paket, kunci notifikasi Android, waktu kirim/terima, original event time bila ada, isi notifikasi, hash payload, hash isi kanonik, status parser, dan relasi ke transaksi logis.
 
@@ -150,7 +150,7 @@ Notifikasi tidak memuat nominal saldo. Versi layar kunci memakai pesan umum. Sar
 
 Kalkulator aritmetika mendukung prioritas operasi, persen, tanda kurung, dan pemakaian angka kekayaan bersih. Simulasi investasi memakai modal awal, setoran akhir bulan, asumsi hasil tahunan efektif, dan durasi. Hasil tidak memperhitungkan biaya, pajak, dan inflasi; bukan transaksi atau imbal hasil terjamin.
 
-Anggaran & target mempertahankan profil bulanan, rencana transportasi, tabungan bisnis, investasi, serta tujuan tambahan. Rencana saldo sampai gajian menjadi sumber ruang belanja Beranda v3. Profil pendapatan bulanan tetap untuk perencanaan, bukan dianggap saldo nyata.
+Anggaran & target mempertahankan profil bulanan, rencana transportasi, tabungan bisnis, investasi, serta tujuan tambahan. Rencana saldo sampai gajian menjadi sumber ruang belanja Beranda. Profil pendapatan bulanan tetap untuk perencanaan, bukan dianggap saldo nyata.
 
 Input rupiah manual menggunakan bilangan bulat sampai 15 digit dengan titik pemisah ribuan visual. Nilai yang disimpan tetap angka rupiah, kursor dan penghapusan bekerja di tengah angka. Paste kelompok Indonesia diterima; format desimal ambigu ditolak tanpa mengalikan nilainya secara diam-diam.
 
@@ -158,9 +158,9 @@ Input rupiah manual menggunakan bilangan bulat sampai 15 digit dengan titik pemi
 
 Lumi mengikuti referensi `Lumi-mascot.png`: burung membulat teal, wajah/perut krem, kaki emas, dan huruf L. Sembilan ekspresi: Happy, Proud, Calm, Excited, Curious, Nervous, Shocked, Sad, Angry. Ikon launcher memiliki versi tenang, senang, fokus serta mode mengikuti rencana.
 
-Ikon launcher dapat dipilih tetap atau mengikuti kondisi rencana ketika aplikasi dibuka. Perubahan mengaktifkan alias baru sebelum menonaktifkan alias lama agar tetap ada pintu masuk. Launcher tertentu mungkin memperbarui tampilan dengan jeda.
+Ikon launcher dapat dipilih tetap atau mengikuti kondisi finansial aktual selama proses aplikasi berjalan. Perubahan mengaktifkan alias baru sebelum menonaktifkan alias lama agar tetap ada pintu masuk. Launcher tertentu mungkin memperbarui tampilan dengan jeda.
 
-Lumi tidak mengejek, menakut-nakuti, atau menekan pengguna untuk berinvestasi. Fase berikutnya dapat menambahkan pendamping percakapan dengan identitas Lumi, persetujuan data yang jelas, dan fungsi baca-saja terlebih dahulu. Fitur percakapan belum diimplementasikan dalam v3.
+Lumi tidak mengejek, menakut-nakuti, atau menekan pengguna untuk berinvestasi. Fase berikutnya dapat menambahkan pendamping percakapan dengan identitas Lumi, persetujuan data yang jelas, dan fungsi baca-saja terlebih dahulu. Fitur percakapan belum diimplementasikan dalam v5.
 
 ## 13. Privasi, cadangan, dan diagnostik
 
@@ -174,7 +174,7 @@ Mode diagnostik tidak aktif secara default. Penemuan paket hanya mencatat nama p
 
 Kotlin, Jetpack Compose Material 3, Navigation Compose, ViewModel/Flow, Room, DataStore Preferences, WorkManager, dan Android Keystore. Parser dan mesin perhitungan memiliki pengujian terpisah dari UI.
 
-Database v1 → v2 menambah eventTime/contentHash observation. V2 → v3 menambah tabel payday_plans. V3 → v4 menambah transaction_confirmations, kosong saat migrasi, agar histori lama tidak dinotifikasi ulang. Upgrade tidak memakai destructive migration. Backup payload tetap dapat membaca cadangan lama tanpa snapshot kalender melalui nilai default kosong.
+Database v1 → v2 menambah eventTime/contentHash observation. V2 → v3 menambah tabel payday_plans. V3 → v4 menambah transaction_confirmations, kosong saat migrasi, agar histori lama tidak dinotifikasi ulang. V4 → v5 menambah status arsip aset (default false). Upgrade tidak memakai destructive migration. Backup payload tetap dapat membaca cadangan lama tanpa snapshot kalender melalui nilai default kosong.
 
 Pengamatan data UI mengikuti perubahan transaksi dan tanggal lokal. Tidak ada backend, biaya langganan, atau akses layanan daring untuk perhitungan inti. Tautan sumber investasi dibuka oleh pengguna di browser.
 
@@ -227,3 +227,21 @@ Peringatan budget memakai rencana aktual dan transaksi cashflow eligible, ambang
 ### Validasi rilis v4
 
 Regresi parser/ledger lama, konfirmasi sekali, izin/filter, self-notification, transfer satu receipt, migrasi v1/v2/v3 dengan saldo/ledger, nominal kalender, batas ekspresi, sapaan, privasi, state tab, serta render tema terang/gelap. Pengujian perangkat fisik dinyatakan terpisah dari simulasi JVM. Build tidak diterbitkan sebelum test dan lint selesai.
+
+
+## Ketentuan pembaruan v5
+
+Ketentuan ini memperinci dan menggantikan perilaku v3/v4 yang bertentangan.
+
+1. Detail transaksi menyimpan draft kategori/nama/catatan secara atomik. Setelah Simpan & konfirmasi atau Abaikan duplikat berhasil, navigasi menuju akar Beranda dan Flow memperbarui data. Gagal simpan tidak menutup layar. Food & Drink diurutkan pertama pada semua pemilih kategori. Rekening yang belum diketahui harus dipilih secara eksplisit; beberapa rekening provider sama tidak boleh dipilih sembarang.
+2. Kalender mempertahankan P&L bertanda dan hari terpilih, memakai tiga kartu ringkasan. Grafik pengeluaran mengikuti bulan aktif, mengabaikan transfer sendiri/koreksi/catatan diabaikan, dan tidak menggambar hari mendatang sebagai aktual. Ketuk titik atau slider aksesibel membuka rincian tanggal. Semua angka/grafik menghormati mode hide.
+3. Rekomendasi adaptif hanya berlaku bagi rencana aktif. Saldo dasar = min(saldo snapshot berjalan, total rekening aktif); tanpa rekening gunakan saldo rencana. Kewajiban terlindungi = sisa cadangan tagihan + sisa transportasi + buffer + modal bisnis + investasi. Dana bebas = max(saldo dasar − kewajiban terlindungi, 0). Rekomendasi harian = (dana bebas + belanja hari ini) / sisa hari hingga tanggal pemasukan, tidak termasuk hari pemasukan. Safe to Spend = max(0, min(rekomendasi − belanja hari ini, target manual − belanja hari ini, saldo dasar − kewajiban terlindungi)). Target tersimpan dan hasil historis tidak berubah.
+4. Proyeksi saldo = saldo dasar − sisa tagihan/transportasi − sisa target belanja hari ini − target harian × jumlah hari berikutnya sebelum pemasukan. Belum termasuk perkiraan gaji; proyeksi dapat negatif. Cadangan buffer tersedia dibatasi saldo setelah alokasi lain. Dana yang sudah dipindahkan keluar untuk investasi/bisnis perlu direkonsiliasi dalam rencana baru.
+5. Aset memakai isArchived (default false), Room 4→5 hanya ALTER TABLE; jalur migrasi 1/2/3/4→5 wajib diuji. Arsip dikeluarkan dari total aset tetapi tetap masuk backup dan dapat dipulihkan. Rekening memakai isActive; ledger dan transaksi lama tetap ada. Pembaruan nama/status rekening tidak menimpa saldo dari snapshot UI lama.
+6. Perlu ditinjau: nominal, sumber, waktu, kategori/status, Tinjau dan Hapus. Hapus meminta konfirmasi dan menandai ignored; pembalikan ledger satu kali. Format gagal parse tetap dapat dibuka atau diabaikan, bukan dikarang menjadi transaksi.
+7. Launcher mempunyai sembilan alias ekspresi dan alias Focus lama untuk kompatibilitas. Identitas visual dari Lumi-app-cover.png, sumber gambar tidak digambar ulang. State aktual terpusat: risiko serius, perlu tinjau termasuk gagal parse, lonjakan, pemasukan satu jam terakhir, pencapaian target/hari sebelumnya dalam budget, lalu penggunaan harian. Pembaruan ikon hanya ketika mood berubah; tidak menjadwalkan pekerjaan periodik untuk ikon.
+8. Listener recovery berbasis kejadian, maksimal tiga retry dengan backoff selain permintaan langsung. Trigger: disconnect, destruction, application startup, boot, package replacement. Permission wajib dicek. Diagnostics timestamp persisten tanpa payload di log; label aktif hanya bila listener benar-benar terhubung. Batas Android/force-stop dijelaskan dalam README.
+9. Deduplikasi lintas paket BCA mensyaratkan satu rekening aktif teridentifikasi, amount/direction/type yang kompatibel dan jendela maksimum 90 detik. Referensi sama atau identitas event serta pihak tanpa masking yang cocok merupakan bukti kuat; referensi/pihak berbeda menolak merge. Kemiripan tanpa bukti kuat dalam 30 detik ditahan, excluded, tanpa ledger tambahan. Observations tetap terhubung ke transaksi asli dan tercantum dalam sourceObservationIds. Bukti meragukan tidak menghapus transaksi sah.
+10. Pengujian meliputi alur simpan/abaikan kembali Beranda, review, kategori, arsip/pulihkan, saldo/ledger, migrasi, rekomendasi, periode tren, compact cashflow, launcher, dan listener tanpa Activity. Rilis wajib melalui build-update.ps1, README/CHANGELOG/PRD/DESIGN diperbarui, APK bernomor naik, tautan langsung terbaru dan SHA-256 selalu tersedia tanpa permintaan ulang.
+
+Validasi rilis v5: 137 test lulus; testDebugUnitTest, lintDebug, assembleDebug berhasil. Lint: 0 error, 13 warning nonblocking. Rendering native termasuk sembilan ikon dan layar 320/393 dp; perangkat fisik belum diuji.

@@ -42,6 +42,7 @@ fun AccountsScreen() {
     val error by viewModel.error.collectAsState()
     val accounts by viewModel.accounts.collectAsState()
 
+    var archiveId by remember { mutableStateOf<Long?>(null) }
     var name by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf("") }
     var provider by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(AccountProvider.BCA) }
     var openingBalance by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf("") }
@@ -54,9 +55,12 @@ fun AccountsScreen() {
                         Text(account.name, fontWeight = FontWeight.Medium)
                         Text(com.luxwallet.app.core.common.privateRupiah(account.currentEstimatedBalance), style = MaterialTheme.typography.titleMedium)
                     }
+                    androidx.compose.material3.TextButton({ if (account.isActive) archiveId = account.id else viewModel.setActive(account, true) }, enabled = !saving) {
+                        Text(if (account.isActive) "Arsipkan rekening" else "Aktifkan kembali")
+                    }
                     Text("${account.kind.name} • ${account.provider.name}", style = MaterialTheme.typography.bodyMedium)
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Switch(checked = account.includeInNetWorth, onCheckedChange = { viewModel.setIncludeInNetWorth(account, it) })
+                        Switch(enabled = !saving, checked = account.includeInNetWorth, onCheckedChange = { viewModel.setIncludeInNetWorth(account, it) })
                         Text("Hitung dalam kekayaan bersih", style = MaterialTheme.typography.bodyMedium)
                     }
                 }
@@ -94,4 +98,9 @@ fun AccountsScreen() {
             }
         }
     }
+    archiveId?.let { id -> androidx.compose.material3.AlertDialog(onDismissRequest = { archiveId = null },
+        title = { Text("Arsipkan rekening?") }, text = { Text("Riwayat tetap tersimpan. Saldo rekening dikeluarkan dari aset aktif dan pencatatan otomatis berhenti untuk rekening ini.") },
+        confirmButton = { androidx.compose.material3.TextButton({ accounts.find { it.id == id }?.let { viewModel.setActive(it, false) }; archiveId = null }) { Text("Arsipkan") } },
+        dismissButton = { androidx.compose.material3.TextButton({ archiveId = null }) { Text("Batal") } }) }
+
 }

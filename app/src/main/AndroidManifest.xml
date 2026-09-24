@@ -4,6 +4,7 @@
 
     <!-- Notification access is granted by the user via system settings (ACTION_NOTIFICATION_LISTENER_SETTINGS). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" tools:node="remove" />
 
@@ -42,6 +43,47 @@
             <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
         </activity-alias>
 
+        <activity-alias android:name=".LumiProud" android:targetActivity=".MainActivity"
+            android:exported="true" android:enabled="false" android:icon="@mipmap/ic_lumi_proud" android:label="@string/app_name">
+            <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
+        </activity-alias>
+
+        <activity-alias android:name=".LumiExcited" android:targetActivity=".MainActivity"
+            android:exported="true" android:enabled="false" android:icon="@mipmap/ic_lumi_excited" android:label="@string/app_name">
+            <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
+        </activity-alias>
+
+        <activity-alias android:name=".LumiCurious" android:targetActivity=".MainActivity"
+            android:exported="true" android:enabled="false" android:icon="@mipmap/ic_lumi_curious" android:label="@string/app_name">
+            <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
+        </activity-alias>
+
+        <activity-alias android:name=".LumiNervous" android:targetActivity=".MainActivity"
+            android:exported="true" android:enabled="false" android:icon="@mipmap/ic_lumi_nervous" android:label="@string/app_name">
+            <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
+        </activity-alias>
+
+        <activity-alias android:name=".LumiShocked" android:targetActivity=".MainActivity"
+            android:exported="true" android:enabled="false" android:icon="@mipmap/ic_lumi_shocked" android:label="@string/app_name">
+            <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
+        </activity-alias>
+
+        <activity-alias android:name=".LumiSad" android:targetActivity=".MainActivity"
+            android:exported="true" android:enabled="false" android:icon="@mipmap/ic_lumi_sad" android:label="@string/app_name">
+            <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
+        </activity-alias>
+
+        <activity-alias android:name=".LumiAngry" android:targetActivity=".MainActivity"
+            android:exported="true" android:enabled="false" android:icon="@mipmap/ic_lumi_angry" android:label="@string/app_name">
+            <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
+        </activity-alias>
+
+        <receiver android:name=".notification.ListenerRestartReceiver" android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
         <service
             android:name=".notification.LuxNotificationListenerService"
             android:exported="true"

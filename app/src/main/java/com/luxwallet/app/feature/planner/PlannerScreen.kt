@@ -27,6 +27,7 @@ val planDateFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy
     val app = LocalContext.current.applicationContext as LuxWalletApp
     val hidden by app.preferences.amountsHidden.collectAsState(initial = true)
     val transport by app.preferences.transportPlan.collectAsState(initial = com.luxwallet.app.core.common.TransportPlan())
+    var showDetails by rememberSaveable { mutableStateOf(false) }
     var editing by rememberSaveable { mutableStateOf(false) }
     var cash by rememberSaveable { mutableStateOf("") }
     var bills by rememberSaveable { mutableStateOf("0") }
@@ -73,15 +74,38 @@ val planDateFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy
                     Button({ begin() }) { Text("Buat rencana") }
                 } }
             } else {
-                item { Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text("${status.plan.start.format(planDateFormat)} – ${status.plan.end.minusDays(1).format(planDateFormat)}", style = MaterialTheme.typography.titleMedium)
-                    Text(if (status.expired) "Rencana berakhir · konfirmasi saldo terbaru" else "Sisa belanja hari ini", color = MaterialTheme.colorScheme.primary)
-                    Text(if (status.expired) "Perbarui rencana" else money(status.remainingToday.coerceAtLeast(0)), style = MaterialTheme.typography.headlineMedium)
-                    Text("Target per hari: ${money(status.dailyBudget)}")
-                    Text("Sisa dana bebas periode: ${money(status.freeRemaining)}")
-                    if (status.freeRemaining < 0) Text("Dana belum menutup seluruh alokasi. Kurangi target yang bisa ditunda sebelum menambah pengeluaran.", color = MaterialTheme.colorScheme.error)
-                    OutlinedButton({ begin() }) { Text("Konfirmasi saldo & perbarui") }
-                } } }
+                item {
+                    val adaptive = state.adaptive
+                    Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text(if (status.expired) "Rencana berakhir" else "${adaptive?.daysRemaining ?: 0} hari sampai gajian", style = MaterialTheme.typography.titleLarge)
+                        Text(status.plan.end.format(planDateFormat), style = MaterialTheme.typography.bodyMedium)
+                        Text("Aman dibelanjakan hari ini", style = MaterialTheme.typography.labelLarge)
+                        Text(if (status.expired) "Perbarui rencana" else money(adaptive?.safeToSpend ?: 0), style = MaterialTheme.typography.headlineLarge)
+                        if (!hidden && !status.expired) {
+                            LinearProgressIndicator(progress = { (status.usedPercent / 100).toFloat().coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth())
+                            Text("${status.usedPercent.toInt()}% budget hari ini terpakai", style = MaterialTheme.typography.bodySmall)
+                        }
+                        if (status.freeRemaining < 0) Text("Alokasi melebihi saldo. Tinjau target yang bisa ditunda.", color = MaterialTheme.colorScheme.error)
+                        OutlinedButton({ begin() }) { Text("Konfirmasi saldo & perbarui") }
+                    } }
+                }
+                val adaptive = state.adaptive
+                if (adaptive != null) {
+                    item { Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FinancialMetric("Saldo tersedia", money(adaptive.cash), Modifier.weight(1f))
+                        FinancialMetric("Budget per hari", money(adaptive.current), Modifier.weight(1f))
+                    } }
+                    item { Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FinancialMetric("Terpakai periode ini", money(adaptive.totalSpent), Modifier.weight(1f))
+                        FinancialMetric("Penyangga tersisa", money(adaptive.bufferRemaining), Modifier.weight(1f))
+                    } }
+                    item {
+                        FinancialMetric("Proyeksi saldo sebelum gajian", money(adaptive.projectedBalance), Modifier.fillMaxWidth())
+                        Text("Simulasi jika sisa pengeluaran mengikuti budget tersimpan dan seluruh cadangan tagihan/transportasi terpakai. Belum termasuk perkiraan gaji.", style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+                item { TextButton({ showDetails = !showDetails }) { Text(if (showDetails) "Tutup rincian alokasi" else "Rincian alokasi & jadwal pemasukan") } }
+                if (showDetails) {
                 item { OutlinedCard { Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Alokasi saat rencana dibuat", style = MaterialTheme.typography.titleMedium)
                     Text("Saldo dikonfirmasi: ${money(status.plan.availableCash)}")
@@ -100,6 +124,7 @@ val planDateFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy
                     Text("${status.plan.end.format(planDateFormat)}: ${money(if (status.plan.end.dayOfMonth == 25) status.plan.expectedOn25 else status.plan.expectedOn1)} (perkiraan)")
                     Text("${next.format(planDateFormat)}: ${money(if (next.dayOfMonth == 25) status.plan.expectedOn25 else status.plan.expectedOn1)} (perkiraan)")
                     Text("Angka 0 berarti belum diisi. Pada tanggal pemasukan, catat uang yang benar-benar diterima dan buat rencana berikutnya. Jadwal dapat digeser bila terlambat.", style = MaterialTheme.typography.bodySmall)
+                }
                 }
             }
         } else {

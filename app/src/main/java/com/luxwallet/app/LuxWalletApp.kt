@@ -35,10 +35,11 @@ class LuxWalletApp : Application(), Configuration.Provider {
 
     val database: LuxDatabase by lazy {
         Room.databaseBuilder(this, LuxDatabase::class.java, LuxDatabase.DATABASE_NAME)
-            .addMigrations(LuxDatabase.MIGRATION_1_2, LuxDatabase.MIGRATION_2_3, LuxDatabase.MIGRATION_3_4)
+            .addMigrations(LuxDatabase.MIGRATION_1_2, LuxDatabase.MIGRATION_2_3, LuxDatabase.MIGRATION_3_4, LuxDatabase.MIGRATION_4_5)
             .build()
     }
 
+    val lumiState by lazy { com.luxwallet.app.data.LumiStateRepository(this) }
     val paydayPlanRepository by lazy { com.luxwallet.app.data.PaydayPlanRepository(database.paydayPlanDao()) }
     val preferences: AppPreferences by lazy { AppPreferences(this) }
     val parserRegistry: ParserRegistry by lazy { ParserRegistry() }
@@ -70,7 +71,15 @@ class LuxWalletApp : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+        com.luxwallet.app.notification.ListenerRecovery.enqueue(this)
         com.luxwallet.app.notification.TransactionNotifications.createChannel(this)
+        applicationScope.launch {
+            kotlinx.coroutines.flow.combine(preferences.lumiIcon, lumiState.mood) { mode, mood ->
+                if (mode == "AUTO") mood else runCatching { com.luxwallet.app.core.ui.component.LumiMood.valueOf(mode) }.getOrDefault(mood)
+            }.distinctUntilChanged().collect { mood ->
+                runCatching { com.luxwallet.app.core.ui.component.LumiLauncher.apply(this@LuxWalletApp, mood) }
+            }
+        }
         applicationScope.launch {
             database.transactionConfirmationDao().nextDue().distinctUntilChanged().collect { due ->
                 if (due != null) com.luxwallet.app.notification.TransactionNotifications.schedule(this@LuxWalletApp, due)

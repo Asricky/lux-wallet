@@ -19,5 +19,6 @@ data class AssetEntity(
     val updatedAt: Long,
     val includeInNetWorth: Boolean = true,
     /** Optional link to the account this asset mirrors (e.g. a Deposito held "at" a bank account). */
-    val linkedAccountId: Long? = null
+    val linkedAccountId: Long? = null,
+    @androidx.room.ColumnInfo(defaultValue = "0") val isArchived: Boolean = false
 )

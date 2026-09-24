@@ -1,6 +1,6 @@
 # Lux Wallet — Panduan desain
 
-Revisi 20 September 2026 · v4. Perhitungan dan perilaku: [PRD.md](PRD.md).
+Revisi 24 September 2026 · v5. Perhitungan dan perilaku: [PRD.md](PRD.md).
 
 ## Arah produk
 
@@ -8,9 +8,9 @@ Aplikasi keuangan personal yang tenang, ringkas, dan ramah. Dahulukan nominal ya
 
 ## Identitas Lumi
 
-<img src="app/src/main/res/drawable-nodpi/lumi_emotions.png" width="540" alt="Sembilan ekspresi Lumi" />
+<img src="Lumi-app-cover.png" width="540" alt="Sembilan ekspresi Lumi" />
 
-Lumi: burung membulat teal, jambul daun, wajah/perut krem, huruf L dan kaki emas, material lembut tiga dimensi. Referensi asli pemilik: [Lumi-mascot.png](Lumi-mascot.png). Atlas transparan berada di `drawable-nodpi/lumi_emotions.png`, sembilan sel persegi sama besar. Urutan baris: Happy/Proud/Calm, Excited/Curious/Nervous, Shocked/Sad/Angry. Komponen `Lumi` mengambil wilayah atlas saat menggambar; teks kondisi tetap menjadi komponen native.
+Lumi: penguin teal, wajah krem, paruh emas, koin di atas jambul. Acuan cover aktif: [Lumi-app-cover.png](Lumi-app-cover.png). Gambar dibaca sebagai atlas native dengan sembilan wilayah kartu, bukan sembilan sel sama besar; ukuran dan margin sumber dipertahankan. Urutan: Happy/Proud/Calm, Excited/Curious/Nervous, Shocked/Sad/Angry. Komponen Lumi memakai source rectangles dan sudut membulat. Referensi karakter lama [Lumi-mascot.png](Lumi-mascot.png) tetap menjadi arsip identitas.
 
 | Ekspresi | Bukti pemicu |
 | --- | --- |
@@ -22,11 +22,11 @@ Lumi: burung membulat teal, jambul daun, wajah/perut krem, huruf L dan kaki emas
 | Curious | Ada transaksi berstatus perlu ditinjau |
 | Shocked | Pengeluaran terbaru >3× rata-rata minimal tiga catatan tujuh hari sebelumnya |
 | Excited | Pemasukan nyata baru tercatat, bukan pindah saldo/penyesuaian |
-| Proud | Hari yang sudah selesai dengan rencana dan pemakaian <75% |
+| Proud | Target tabungan tercapai atau hari sebelumnya selesai dalam budget |
 
 Risiko budget mendahului ekspresi peristiwa. Tidak mengarang pencapaian/angka. Sisa anggaran tidak dicatat menjadi pendapatan. Maksimal satu Lumi utama per layar; ukuran 64–100 dp untuk pendamping informasi, 140 dp untuk onboarding. Jangan tampilkan avatar kosong atau hukuman visual.
 
-Launcher memakai tiga foreground transparan `lumi_launcher*.png`, latar aqua, safe zone adaptive icon. Alias lama dipertahankan agar upgrade tetap bisa diluncurkan. Mode otomatis memetakan ekspresi ke tenang/senang/fokus saat aplikasi dibuka, bukan mengubah ikon terus-menerus di latar belakang. Nama launcher tetap Lux Wallet. Aset vektor lama di docs/brand adalah arsip v3, bukan acuan desain baru.
+Launcher memakai sembilan adaptive icon dari atlas cover yang sama. InsetDrawable persentase memilih wilayah sumber dan inset luar mengimbangi perluasan adaptive foreground; ikon tetap proporsional pada berbagai ukuran. Implementasi mengikuti [InsetDrawable Android](https://android.googlesource.com/platform/frameworks/base/+/refs/heads/main/graphics/java/android/graphics/drawable/InsetDrawable.java). Sembilan alias mood serta Focus lama tetap dideklarasikan. Aktifkan tujuan sebelum menonaktifkan alias lain dengan DONT_KILL_APP. Mode AUTO memakai state keuangan terpusat, mengikuti transaksi dan rencana selama proses berjalan; launcher dapat menunda penyegaran. Nama launcher tetap Lux Wallet.
 
 ## Warna
 
@@ -80,3 +80,15 @@ Konfirmasi memakai channel Lux Wallet Transactions dan ID logis transaksi. Antre
 Periksa terang/gelap, layar 320/393 dp, angka panjang, daftar kosong, pilihan tab setelah kembali, keyboard/sheet, privasi, serta kondisi Lumi. Test otomatis meliputi matematika, parser, ledger, migrasi, notifikasi dan UI. Simulasi tidak menggantikan pemeriksaan launcher/biometrik/notifikasi pada HP fisik.
 
 Setiap update harus menyertakan CHANGELOG dan menjalankan `build-update.ps1`. README wajib selalu memuat link langsung APK versi terbaru, checksum, dan perubahannya; script mengisi blok rilis secara otomatis. Aturan ini tetap berlaku pada pembaruan berikutnya tanpa permintaan ulang pemilik.
+
+
+## Komposisi layar v5
+
+- Kalender: pemilih periode → tiga kartu Masuk/Keluar/Selisih → grid bertanda → Tren Pengeluaran → saran budget hari ini → rincian tanggal/transaksi. Rekomendasi hari ini selalu mencantumkan tanggal agar tidak disalahartikan sebagai rekomendasi historis saat melihat bulan lain.
+- FinancialMetric: label kecil, nominal titleMedium, padding 14 dp. Dua kolom untuk angka rencana, tiga kolom ringkasan kalender dengan nominal compact (Rp80K). Angka panjang boleh membungkus; tidak dipotong ellipsis.
+- Grafik: garis teal tipis, tiga garis bantu, sumbu nominal/tanggal, penanda tanggal terpilih. Tap point dan slider tersedia. Grafik disembunyikan saat hide, bukan sekadar label nominalnya.
+- Planner: hero hari tersisa + safe to spend + progress, dua baris metrik saldo/budget/pemakaian/buffer, proyeksi saldo. Rincian alokasi/jadwal tertutup default; tetap tersedia lewat tombol.
+- Coach: Lumi 88 dp, satu insight utama, dua kartu pendukung maksimum. Pengaturan pengingat/ikon dan panduan investasi berada dalam bagian terpisah yang dapat dibuka.
+- Review: kartu ringkas dengan Tinjau/Hapus; dialog singkat sebelum mengabaikan catatan. Detail menyimpan draft sekaligus lalu menuju Beranda. Tidak melakukan perubahan kategori saat pemilih sekadar diketuk.
+- Aset: edit nama/nilai pada sheet, aksi arsip dengan konfirmasi, arsip aset dapat dipulihkan. Rekening memiliki status aktif/arsip, histori tidak dihapus.
+- Pengaturan notifikasi: status Active/Inactive/Permission Required disertai bahasa Indonesia, tombol akses sistem, dan dua timestamp diagnostik. Jangan mengklaim pasti merekam notifikasi saat Android membatasi proses.

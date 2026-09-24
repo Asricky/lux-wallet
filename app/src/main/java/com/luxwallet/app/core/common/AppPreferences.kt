@@ -22,6 +22,12 @@ private val Context.dataStore by preferencesDataStore(name = "lux_wallet_setting
  */
 class AppPreferences(private val context: Context) {
 
+    val listenerDiagnostics = context.dataStore.data.map { prefs ->
+        (prefs[androidx.datastore.preferences.core.longPreferencesKey("listener_received")] ?: 0L) to
+            (prefs[androidx.datastore.preferences.core.longPreferencesKey("parser_activity")] ?: 0L)
+    }
+    suspend fun recordListenerReceived(at: Long) { context.dataStore.edit { it[androidx.datastore.preferences.core.longPreferencesKey("listener_received")] = at } }
+    suspend fun recordParserActivity(at: Long) { context.dataStore.edit { it[androidx.datastore.preferences.core.longPreferencesKey("parser_activity")] = at } }
     val budgetAlertMarker = context.dataStore.data.map { it[stringPreferencesKey("budget_alert_marker")] ?: "" }
     suspend fun setBudgetAlertMarker(value: String) { context.dataStore.edit { it[stringPreferencesKey("budget_alert_marker")] = value } }
     val profileName = context.dataStore.data.map { it[stringPreferencesKey("profile_name")] ?: "" }
@@ -55,7 +61,7 @@ class AppPreferences(private val context: Context) {
 
     val coachEnabled = context.dataStore.data.map { it[Keys.COACH_ENABLED] ?: false }
     val coachLastDate = context.dataStore.data.map { it[Keys.COACH_LAST_DATE] }
-    val lumiIcon = context.dataStore.data.map { it[Keys.LUMI_ICON] ?: "CALM" }
+    val lumiIcon = context.dataStore.data.map { it[Keys.LUMI_ICON] ?: "AUTO" }
     suspend fun setCoachEnabled(enabled: Boolean) { context.dataStore.edit { it[Keys.COACH_ENABLED] = enabled } }
     suspend fun setCoachLastDate(date: String) { context.dataStore.edit { it[Keys.COACH_LAST_DATE] = date } }
     suspend fun setLumiIcon(value: String) { context.dataStore.edit { it[Keys.LUMI_ICON] = value } }

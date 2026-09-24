@@ -10,6 +10,12 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface AccountDao {
+    @Query("UPDATE accounts SET name = :name WHERE id = :id")
+    suspend fun rename(id: Long, name: String)
+    @Query("UPDATE accounts SET isActive = :active WHERE id = :id")
+    suspend fun setActive(id: Long, active: Boolean)
+    @Query("UPDATE accounts SET includeInNetWorth = :include WHERE id = :id")
+    suspend fun setIncludeInNetWorth(id: Long, include: Boolean)
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(account: AccountEntity): Long
 

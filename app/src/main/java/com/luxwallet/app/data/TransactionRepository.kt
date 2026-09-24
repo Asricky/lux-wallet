@@ -49,9 +49,43 @@ class TransactionRepository(
     fun observeInRange(from: Long, to: Long): Flow<List<TransactionEntity>> = transactionDao.observeInRange(from, to)
     suspend fun getInRange(from: Long, to: Long): List<TransactionEntity> = transactionDao.getInRange(from, to)
 
+    suspend fun saveDetails(id: Long, merchant: String, note: String, categoryId: Long?, excluded: Boolean, learn: Boolean, selectedAccountId: Long? = null) = database.withTransaction {
+        val tx = transactionDao.getById(id) ?: error("Transaksi tidak ditemukan")
+        check(tx.reviewStatus != ReviewStatus.IGNORED) { "Transaksi sudah diabaikan" }
+        if (categoryId != null) require(categoryRepository.getById(categoryId) != null)
+        val accountId = tx.sourceAccountId ?: selectedAccountId ?: error("Pilih rekening untuk transaksi ini")
+        val selectedAccount = accountDao.getById(accountId) ?: error("Rekening tidak ditemukan")
+        if (tx.sourceAccountId == null) {
+            require(selectedAccount.isActive) { "Pilih rekening yang aktif" }
+            require(tx.transactionTime >= selectedAccount.openingBalanceDate) { "Transaksi ini sudah termasuk saldo awal. Abaikan catatan agar saldo tidak dihitung dua kali." }
+            if (ledgerEntryDao.getAllOnce().none { it.transactionId == id }) {
+                val delta = if (tx.direction == TransactionDirection.IN) tx.amount else -tx.amount
+                ledgerEntryDao.insert(LedgerEntryEntity(transactionId = id, accountId = accountId, deltaAmount = delta, createdAt = System.currentTimeMillis()))
+                accountDao.applyBalanceDelta(accountId, delta)
+            }
+        }
+        transactionDao.update(tx.copy(sourceAccountId = accountId, merchantName = merchant.trim().ifBlank { null }, note = note.trim().ifBlank { null },
+            categoryId = categoryId, subcategoryId = null,
+            isExcludedFromCashflow = if (tx.reviewReason == ReviewReason.POSSIBLE_DUPLICATE) true else excluded,
+            updatedAt = System.currentTimeMillis()))
+        confirm(id)
+        if (learn && merchant.isNotBlank() && categoryId != null && merchantRuleDao.getAll().none {
+                it.merchantContains.equals(merchant.trim(), true) && it.categoryId == categoryId }) {
+            merchantRuleDao.insert(com.luxwallet.app.core.database.entity.MerchantRuleEntity(
+                merchantContains = merchant.trim(), categoryId = categoryId, createdAt = System.currentTimeMillis()))
+        }
+    }
+
+    suspend fun updateAccountValue(id: Long, name: String, value: Long) = database.withTransaction {
+        require(name.isNotBlank())
+        setAccountBalance(id, value)
+        accountDao.rename(id, name.trim())
+    }
+
     suspend fun confirm(id: Long, merchant: String? = null, note: String? = null) = database.withTransaction {
         val tx = transactionDao.getById(id) ?: return@withTransaction
         if (tx.reviewStatus == ReviewStatus.IGNORED) return@withTransaction
+        require(tx.sourceAccountId != null) { "Pilih rekening terlebih dahulu" }
         val held = tx.reviewReason == ReviewReason.POSSIBLE_DUPLICATE
         if (held && ledgerEntryDao.getAllOnce().none { it.transactionId == id }) {
             val accountId = tx.sourceAccountId ?: error("Pilih rekening terlebih dahulu")
@@ -191,9 +225,15 @@ class TransactionRepository(
         }
     }
 
+    private suspend fun attachObservation(observation: NotificationObservationEntity, tx: TransactionEntity) {
+        val ids = tx.sourceObservationIds.orEmpty().split(',').mapNotNull { it.toLongOrNull() }.toSet() + observation.id
+        transactionDao.update(tx.copy(sourceObservationIds = ids.sorted().joinToString(",")))
+        observationDao.update(observation.copy(linkedTransactionId = tx.id, parseStatus = ParseStatus.PARSED))
+    }
+
     private suspend fun ingestOnce(observation: NotificationObservationEntity, candidate: TransactionCandidate) {
         val now = System.currentTimeMillis()
-        val sourceAccount = accountDao.findUserOwnedByProvider(providerFor(candidate.sourceApp))
+        val sourceAccount = accountDao.findAllUserOwnedByProvider(providerFor(candidate.sourceApp)).singleOrNull()
         if (sourceAccount != null && candidate.transactionTime < sourceAccount.openingBalanceDate) {
             observationDao.update(observation.copy(parseStatus = ParseStatus.IGNORED,
                 parseFailureReason = "Sudah termasuk dalam saldo awal akun"))
@@ -201,12 +241,20 @@ class TransactionRepository(
         }
 
         if (sourceAccount == null) {
+            for (old in observationDao.linkedInRange(candidate.transactionTime - dedupeWindow, candidate.transactionTime + dedupeWindow)) {
+                val tx = old.linkedTransactionId?.let { transactionDao.getById(it) } ?: continue
+                if (tx.sourceAccountId == null && tx.amount == candidate.amount && tx.direction == candidate.direction &&
+                    com.luxwallet.app.engine.NotificationIdentity.compare(old, observation) == com.luxwallet.app.engine.NotificationIdentityMatch.SAME_EVENT) {
+                    attachObservation(observation, tx)
+                    return
+                }
+            }
             val txId = transactionDao.insert(
                 buildTransaction(
                     candidate = candidate, sourceAccountId = null, categoryId = null, subcategoryId = null,
                     reviewStatus = ReviewStatus.NEEDS_REVIEW, reviewReason = ReviewReason.ACCOUNT_NOT_CONFIGURED,
                     now = now, observationId = observation.id
-                )
+                ).copy(isExcludedFromCashflow = true)
             )
             observationDao.update(observation.copy(linkedTransactionId = txId, parseStatus = ParseStatus.PARSED))
             return
@@ -217,6 +265,7 @@ class TransactionRepository(
                 if (com.luxwallet.app.engine.NotificationIdentity.compare(it, observation) ==
                     com.luxwallet.app.engine.NotificationIdentityMatch.SAME_EVENT) 0 else 1
             }
+        val crossBcaAllowed = candidate.sourceApp == SourceApp.MYBCA && accountDao.findAllUserOwnedByProvider(AccountProvider.BCA).size == 1
         for (old in observations) {
             val tx = old.linkedTransactionId?.let { transactionDao.getById(it) } ?: continue
             // A merged transfer has one OUT direction, but its incoming observation still owns
@@ -225,17 +274,19 @@ class TransactionRepository(
                 sourceAccount.id in listOf(tx.sourceAccountId, tx.destinationAccountId) &&
                 com.luxwallet.app.engine.NotificationIdentity.compare(old, observation) ==
                     com.luxwallet.app.engine.NotificationIdentityMatch.SAME_EVENT) {
-                observationDao.update(observation.copy(linkedTransactionId = tx.id, parseStatus = ParseStatus.PARSED))
+                attachObservation(observation, tx)
                 return
             }
             if (tx.sourceAccountId != sourceAccount.id || tx.amount != candidate.amount || tx.direction != candidate.direction ||
                 tx.isManual || tx.isInternalTransfer) continue
             if (tx.referenceNumber != null && candidate.referenceNumber != null && tx.referenceNumber != candidate.referenceNumber) continue
-            val identity = com.luxwallet.app.engine.NotificationIdentity.compare(old, observation) ?: continue
+            val identity = com.luxwallet.app.engine.NotificationIdentity.compare(old, observation)
+                ?: if (crossBcaAllowed) com.luxwallet.app.engine.BcaDuplicateEvidence.compare(old, observation, tx, candidate, sourceAccount.id) else null
+            if (identity == null) continue
             if (identity == com.luxwallet.app.engine.NotificationIdentityMatch.POSSIBLE_DUPLICATE &&
                 (tx.reviewReason == ReviewReason.POSSIBLE_DUPLICATE || tx.reviewStatus == ReviewStatus.IGNORED)) continue
             if (identity == com.luxwallet.app.engine.NotificationIdentityMatch.SAME_EVENT) {
-                observationDao.update(observation.copy(linkedTransactionId = tx.id, parseStatus = ParseStatus.PARSED))
+                attachObservation(observation, tx)
             } else {
                 val pendingId = transactionDao.insert(buildTransaction(candidate, sourceAccount.id, tx.categoryId, tx.subcategoryId,
                     ReviewStatus.NEEDS_REVIEW, ReviewReason.POSSIBLE_DUPLICATE, now, observation.id).copy(isExcludedFromCashflow = true))
@@ -265,7 +316,7 @@ class TransactionRepository(
             .map { it.toLedgerCandidate().copy(sourceApp = candidate.sourceApp) }
 
         DeduplicationEngine.findDuplicate(newAsLedgerCandidate, recentOnThisAccount)?.let { duplicate ->
-            observationDao.update(observation.copy(linkedTransactionId = duplicate.id, parseStatus = ParseStatus.PARSED))
+            transactionDao.getById(duplicate.id)?.let { attachObservation(observation, it) }
             return
         }
 

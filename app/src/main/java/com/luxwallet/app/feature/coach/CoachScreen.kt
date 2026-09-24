@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -34,6 +35,11 @@ import kotlinx.coroutines.launch
     val vm = luxViewModel { PlannerViewModel(it) }
     val state by vm.state.collectAsState()
     val enabled by app.preferences.coachEnabled.collectAsState(initial = false)
+    val mood by app.lumiState.mood.collectAsState()
+    var showPreferences by rememberSaveable { mutableStateOf(false) }
+    var showInvestments by rememberSaveable { mutableStateOf(false) }
+    val hidden by app.preferences.amountsHidden.collectAsState(initial = true)
+    fun money(value: Long) = if (hidden) "********" else com.luxwallet.app.core.common.AmountFormat.rupiah(value)
     val icon by app.preferences.lumiIcon.collectAsState(initial = "CALM")
     var allowed by remember { mutableStateOf(CoachNotifications.allowed(context)) }
     var feedback by remember { mutableStateOf<String?>(null) }
@@ -51,23 +57,39 @@ import kotlinx.coroutines.launch
     val advice = MoneyCoach.advise(state.status, state.today)
     val uri = LocalUriHandler.current
     LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
-        item {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Lumi(lumiMood(state.status), Modifier.size(100.dp))
-                Column(Modifier.weight(1f)) {
-                    Text("Halo, aku Lumi", style = MaterialTheme.typography.headlineSmall)
-                    Text("Bantu merencanakan uang, satu langkah setiap hari.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        item { Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                Lumi(mood, Modifier.size(88.dp))
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("Saran Lumi", style = MaterialTheme.typography.labelLarge)
+                    Text(when (mood) {
+                        LumiMood.CURIOUS -> "Ada catatan yang perlu dicek"
+                        LumiMood.SHOCKED -> "Ada pengeluaran besar"
+                        LumiMood.EXCITED -> "Pemasukan baru tercatat"
+                        LumiMood.PROUD -> "Langkah baik untuk tujuanmu"
+                        LumiMood.NERVOUS, LumiMood.FOCUS -> "Budget mulai menipis"
+                        LumiMood.SAD -> "Yuk, sesuaikan belanja hari ini"
+                        LumiMood.ANGRY -> "Dahulukan kebutuhan utama"
+                        LumiMood.HAPPY -> "Masih aman hari ini"
+                        else -> "Satu langkah setiap hari"
+                    }, style = MaterialTheme.typography.titleLarge)
                 }
             }
-        }
-        item { Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(advice.title, style = MaterialTheme.typography.titleLarge)
-            Text(advice.message)
-            TextButton({ onNavigate(if (advice.action == "Lihat kalender") LuxDestinations.CALENDAR else LuxDestinations.PLANNER) }) {
-                Text(if (advice.action == "Lihat pilihan investasi") "Tinjau alokasi uang" else advice.action)
+            Text(state.adaptive?.let { "Aman dibelanjakan ${money(it.safeToSpend)}" } ?: "Konfirmasi saldo untuk menyiapkan rencana.", style = MaterialTheme.typography.titleMedium)
+            state.status?.takeIf { !it.expired && !hidden }?.let {
+                LinearProgressIndicator(progress = { (it.usedPercent / 100).toFloat().coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth())
+                Text("${it.usedPercent.toInt()}% budget harian terpakai", style = MaterialTheme.typography.bodySmall)
             }
-            Text("Berdasarkan rencana dan catatan di perangkat. Saran tidak memindahkan uang atau membeli investasi.", style = MaterialTheme.typography.bodySmall)
+            TextButton({ onNavigate(if (mood == LumiMood.CURIOUS) LuxDestinations.NEEDS_REVIEW else LuxDestinations.PLANNER) }) {
+                Text(if (mood == LumiMood.CURIOUS) "Tinjau catatan" else "Tinjau rencana")
+            }
         } } }
+        state.adaptive?.let { budget ->
+            item { FinancialMetric("${budget.daysRemaining} hari menuju pemasukan berikutnya", "Budget tersisa ${money(budget.remaining)}", Modifier.fillMaxWidth()) }
+            item { FinancialMetric("Cadangan penyangga", money(budget.bufferRemaining), Modifier.fillMaxWidth()) }
+        }
+        item { TextButton({ showPreferences = !showPreferences }) { Text(if (showPreferences) "Tutup pengaturan Lumi" else "Pengingat & ikon Lumi") } }
+        if (showPreferences) {
         item { OutlinedCard { Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("Pengingat harian", Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
@@ -87,21 +109,23 @@ import kotlinx.coroutines.launch
             feedback?.let { Text(it) }
         } } }
         item {
-            val values = listOf("CALM", "HAPPY", "FOCUS", "AUTO")
-            val labels = listOf("Lumi tenang", "Lumi senang", "Lumi fokus", "Ikuti kondisi rencana")
+            val values = listOf("AUTO", "HAPPY", "PROUD", "CALM", "EXCITED", "CURIOUS", "NERVOUS", "SHOCKED", "SAD", "ANGRY")
+            val labels = listOf("Otomatis mengikuti keuangan", "Senang", "Bangga", "Tenang", "Antusias", "Penasaran", "Waspada", "Terkejut", "Sedih", "Peringatan")
             ChoiceField("Ikon aplikasi", labels[values.indexOf(icon).coerceAtLeast(0)], labels, { index ->
                 scope.launch {
                     try {
-                        val mood = if (index == 3) lumiMood(state.status) else LumiMood.entries[index]
-                        LumiLauncher.apply(context, mood)
+                        val chosenMood = if (values[index] == "AUTO") mood else LumiMood.valueOf(values[index])
+                        LumiLauncher.apply(context, chosenMood)
                         app.preferences.setLumiIcon(values[index])
                         feedback = "Ikon diperbarui. Launcher perangkat mungkin membutuhkan waktu untuk menyegarkan ikon."
                     } catch (_: Exception) { feedback = "Launcher belum menerima perubahan ikon. Coba kembali." }
                 }
             })
-            Text("Mode mengikuti rencana diperbarui saat aplikasi dibuka. Lumi fokus berarti ada rencana yang perlu ditinjau; tidak menilai kebiasaanmu.", style = MaterialTheme.typography.bodySmall)
+            Text("Mode otomatis mengikuti transaksi dan rencana selama proses aplikasi berjalan. Launcher perangkat dapat menunda penyegaran ikon.", style = MaterialTheme.typography.bodySmall)
         }
-        item { Text("Pilihan investasi sesuai tujuan", style = MaterialTheme.typography.titleLarge) }
+        }
+        item { TextButton({ showInvestments = !showInvestments }) { Text(if (showInvestments) "Tutup pilihan investasi" else "Pilihan investasi sesuai tujuan") } }
+        if (showInvestments) {
         item { Text("Kebutuhan dekat & modal bisnis\nUtamakan tabungan yang mudah dicairkan. Reksa dana pasar uang memiliki risiko dan bukan simpanan yang dijamin LPS. Jangan memasukkan uang makan sampai gajian ke instrumen yang sulit dicairkan.") }
         item { Text("Dana beberapa tahun\nPertimbangkan SBN ritel dengan tenor sesuai tujuan. Cek masa penawaran, pajak, ketentuan pencairan, dan risiko harga bila dijual sebelum jatuh tempo.") }
         item { Text("Tujuan lebih dari 5 tahun\nReksa dana indeks terdiversifikasi bisa dipertimbangkan jika siap menerima penurunan nilai. Bandingkan biaya dan prospektus. Investasi kembali hasilnya; imbal hasil tidak tetap atau dijamin.") }
@@ -109,6 +133,7 @@ import kotlinx.coroutines.launch
             TextButton({ uri.openUri("https://www.ojk.go.id/Files/box/BukuSakuOJK.pdf") }) { Text("Baca jenis & risiko investasi · OJK") }
             TextButton({ uri.openUri("https://www.kemenkeu.go.id/sukukritel") }) { Text("Ketentuan SBN ritel · Kemenkeu") }
             TextButton({ onNavigate(LuxDestinations.CALCULATOR) }) { Text("Simulasikan rencana investasi") }
+        }
         }
     }
 }

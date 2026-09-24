@@ -19,6 +19,10 @@ class NotificationRepository(private val observationDao: NotificationObservation
         return observationDao.insert(observation.copy(contentHash = com.luxwallet.app.engine.NotificationIdentity.hash(observation)))
     }
 
+    suspend fun dismissFailed(id: Long) {
+        val item = observationDao.getById(id) ?: return
+        if (item.parseStatus == ParseStatus.FAILED) observationDao.update(item.copy(parseStatus = ParseStatus.IGNORED))
+    }
     suspend fun getPending(): List<NotificationObservationEntity> = observationDao.getByStatus(ParseStatus.PENDING)
 
     suspend fun update(observation: NotificationObservationEntity) = observationDao.update(observation)

@@ -28,7 +28,7 @@ import kotlinx.coroutines.sync.withLock
  */
 class LuxNotificationListenerService : NotificationListenerService() {
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val scope get() = (applicationContext as LuxWalletApp).applicationScope
     private val captureLock = Mutex()
 
     override fun onListenerConnected() {
@@ -40,7 +40,7 @@ class LuxNotificationListenerService : NotificationListenerService() {
 
     override fun onListenerDisconnected() {
         NotificationAccess.connected.value = false
-        NotificationAccess.requestRebind(this)
+        ListenerRecovery.enqueue(this)
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
@@ -92,6 +92,7 @@ class LuxNotificationListenerService : NotificationListenerService() {
             )
 
             val insertedId = app.notificationRepository.insertIfNew(observation)
+            app.preferences.recordListenerReceived(observation.receivedAt)
             if (insertedId != null) {
                 NotificationAccess.lastCaptureError.value = null
                 enqueueProcessing()
@@ -109,7 +110,7 @@ class LuxNotificationListenerService : NotificationListenerService() {
     override fun onDestroy() {
         super.onDestroy()
         NotificationAccess.connected.value = false
-        scope.cancel()
+        ListenerRecovery.enqueue(this)
     }
 
     private fun enqueueProcessing() {

@@ -147,4 +147,102 @@ class AppJourneyTest {
         compose.onNodeWithText("Beranda").performClick()
         capture("home-dark.png")
     }
+    private fun reviewTransaction(): Long = runBlocking {
+        val account = app.accountRepository.observeActiveAccounts().first().first()
+        val id = app.transactionRepository.insertManual(TransactionType.EXPENSE, TransactionDirection.OUT, 3000, account.id)
+        val tx = app.database.transactionDao().getById(id)!!
+        app.database.transactionDao().update(tx.copy(reviewStatus = ReviewStatus.NEEDS_REVIEW, reviewReason = ReviewReason.UNKNOWN_MERCHANT))
+        id
+    }
+    @Test
+    @org.robolectric.annotation.GraphicsMode(org.robolectric.annotation.GraphicsMode.Mode.NATIVE)
+    @Config(sdk = [34], application = LuxWalletApp::class, qualifiers = "w393dp-h851dp-mdpi")
+    fun reviewSaveConfirmsCategoryReturnsHomeAndDoesNotDoubleCount() {
+        val id = reviewTransaction()
+        launch()
+        compose.runOnIdle { nav.openScreen(LuxDestinations.NEEDS_REVIEW) }
+        compose.waitUntil(5000) { compose.onAllNodesWithText("Tinjau").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText("Tinjau").performClick()
+        compose.waitUntil(5000) { compose.onAllNodesWithText("Pilih kategori").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText("Pilih kategori").performClick()
+        compose.onNodeWithText("Food & Drink").assertIsDisplayed().performClick()
+        compose.onNodeWithText("Simpan & konfirmasi").performScrollTo().performClick()
+        try { compose.waitUntil(5000) { compose.onAllNodesWithText("Hi there 👋").fetchSemanticsNodes().isNotEmpty() } } catch (e: Throwable) { throw AssertionError(compose.onRoot().printToString(), e) }
+        compose.runOnIdle { Assert.assertEquals(LuxDestinations.HOME, nav.currentDestination?.route) }
+        runBlocking {
+            Assert.assertEquals(1, app.database.transactionDao().getAllOnce().size)
+            Assert.assertEquals(ReviewStatus.CONFIRMED, app.database.transactionDao().getById(id)!!.reviewStatus)
+            Assert.assertEquals(97000L, app.accountRepository.observeActiveAccounts().first().first().currentEstimatedBalance)
+        }
+    }
+    @Test fun ignoreInDetailsReturnsHomeAndReversesOnce() {
+        val id = reviewTransaction()
+        launch()
+        compose.runOnIdle { nav.openScreen(LuxDestinations.transactionDetail(id)) }
+        compose.waitUntil(5000) { compose.onAllNodesWithText("Abaikan duplikat").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText("Abaikan duplikat").performScrollTo().performClick()
+        compose.waitUntil(5000) { compose.onAllNodesWithText("Hi there 👋").fetchSemanticsNodes().isNotEmpty() }
+        compose.runOnIdle { Assert.assertEquals(LuxDestinations.HOME, nav.currentDestination?.route) }
+        runBlocking {
+            Assert.assertEquals(1, app.database.transactionDao().getAllOnce().size)
+            Assert.assertEquals(ReviewStatus.IGNORED, app.database.transactionDao().getById(id)!!.reviewStatus)
+            Assert.assertEquals(100000L, app.accountRepository.observeActiveAccounts().first().first().currentEstimatedBalance)
+        }
+    }
+    @Test fun reviewDeleteRequiresConfirmationAndRemovesOnlyReviewItem() {
+        val id = reviewTransaction()
+        launch()
+        compose.runOnIdle { nav.openScreen(LuxDestinations.NEEDS_REVIEW) }
+        compose.waitUntil(5000) { compose.onAllNodesWithText("Hapus").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText("Hapus").performClick()
+        compose.onNodeWithText("Batal").performClick()
+        compose.onNodeWithText("Tinjau").assertIsDisplayed()
+        compose.onNodeWithText("Hapus").performClick()
+        compose.onNodeWithText("Hapus catatan").performClick()
+        compose.waitUntil(5000) { compose.onAllNodesWithText("Semua sudah ditinjau.").fetchSemanticsNodes().isNotEmpty() }
+        Assert.assertNotNull(runBlocking { app.database.transactionDao().getById(id) })
+    }
+
+    @Test
+    @Config(sdk = [34], application = LuxWalletApp::class, qualifiers = "w320dp-h740dp-mdpi")
+    @org.robolectric.annotation.GraphicsMode(org.robolectric.annotation.GraphicsMode.Mode.NATIVE)
+    fun financialSummariesAndTrendRemainReadableOnSmallScreens() {
+        runBlocking {
+            app.preferences.setAmountsHidden(false)
+            val today = java.time.LocalDate.now()
+            val start = today.minusDays(2).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+            val account = app.accountRepository.observeActiveAccounts().first().first()
+            app.transactionRepository.setAccountBalance(account.id, 3200000)
+            app.paydayPlanRepository.save(com.luxwallet.app.engine.PaydayPlan(start, today.minusDays(2).toEpochDay(),
+                today.plusDays(3).toEpochDay(), 3200000, bills = 100000, buffer = 100000, business = 1000000, investment = 1500000))
+            app.transactionRepository.insertManual(TransactionType.EXPENSE, TransactionDirection.OUT, 80000, account.id,
+                transactionTime = System.currentTimeMillis() - 1000)
+        }
+        lateinit var view: android.view.View
+        compose.setContent {
+            view = androidx.compose.ui.platform.LocalView.current
+            nav = rememberNavController()
+            LuxWalletTheme { LuxAppScaffold(nav) }
+        }
+        fun capture(name: String) {
+            compose.waitForIdle()
+            val bitmap = android.graphics.Bitmap.createBitmap(view.width, view.height, android.graphics.Bitmap.Config.ARGB_8888)
+            compose.runOnIdle { view.draw(android.graphics.Canvas(bitmap)) }
+            java.io.File("build/reports/ui").mkdirs()
+            java.io.File("build/reports/ui/$name").outputStream().use { bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
+        }
+        compose.runOnIdle { nav.openScreen(LuxDestinations.PLANNER) }
+        compose.waitUntil(5000) { compose.onAllNodesWithText("Aman dibelanjakan hari ini").fetchSemanticsNodes().isNotEmpty() }
+        capture("planner-320.png")
+        compose.runOnIdle { nav.openScreen(LuxDestinations.COACH) }
+        compose.waitUntil(5000) { compose.onAllNodesWithText("Pengingat & ikon Lumi").fetchSemanticsNodes().isNotEmpty() }
+        capture("coach-320.png")
+        compose.runOnIdle { nav.openScreen(LuxDestinations.CALENDAR) }
+        compose.onNodeWithText("Tren Pengeluaran").performScrollTo()
+        compose.onNodeWithContentDescription("Pilih tanggal tren pengeluaran").performScrollTo()
+            .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.SetProgress) { it(0f) }
+        compose.onNodeWithText("1 · Rp0").assertExists()
+        capture("trend-320.png")
+    }
+
 }

@@ -35,23 +35,8 @@ import kotlinx.coroutines.launch
     val status = planState.status
     val app = LocalContext.current.applicationContext as LuxWalletApp
     val hidden by app.preferences.amountsHidden.collectAsState(initial = true)
-    val iconMode by app.preferences.lumiIcon.collectAsState(initial = "CALM")
-    LaunchedEffect(iconMode, lumiMood(status), planState.loaded) {
-        if (iconMode == "AUTO" && planState.loaded) runCatching { LumiLauncher.apply(app, lumiMood(status)) }
-    }
     val profileName by app.preferences.profileName.collectAsState(initial = "")
-    val mood = remember(status, planState.transactions) {
-        val latest = com.luxwallet.app.core.common.CashflowMath.cashflowEligible(planState.transactions).maxByOrNull { it.createdAt }
-        val recent = latest != null && System.currentTimeMillis() - latest.createdAt in 0..3_600_000L
-        val expenses = com.luxwallet.app.core.common.CashflowMath.cashflowEligible(planState.transactions)
-            .filter { it.direction == com.luxwallet.app.core.model.TransactionDirection.OUT && it.id != latest?.id &&
-                System.currentTimeMillis() - it.transactionTime in 0..604_800_000L }
-        val spike = recent && latest?.direction == com.luxwallet.app.core.model.TransactionDirection.OUT &&
-            expenses.size >= 3 && latest.amount > expenses.map { it.amount }.average() * 3
-        companionMood(status,
-            planState.transactions.any { it.reviewStatus == com.luxwallet.app.core.model.ReviewStatus.NEEDS_REVIEW },
-            spike, recent && latest?.direction == com.luxwallet.app.core.model.TransactionDirection.IN && !latest.isInternalTransfer && !latest.isExcludedFromCashflow)
-    }
+    val mood by app.lumiState.mood.collectAsState()
     val scope = rememberCoroutineScope()
     var showInfo by remember { mutableStateOf(false) }
     fun money(amount: Long) = if (hidden) "********" else AmountFormat.rupiah(amount)

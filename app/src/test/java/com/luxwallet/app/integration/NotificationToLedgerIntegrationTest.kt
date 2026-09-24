@@ -18,6 +18,7 @@ import com.luxwallet.app.parser.core.NotificationInput
 import com.luxwallet.app.parser.core.ParseResult
 import com.luxwallet.app.parser.core.ParserRegistry
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.flow.first
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -70,11 +71,11 @@ class NotificationToLedgerIntegrationTest {
     }
 
     private suspend fun ingestNotification(sourceApp: SourceApp, title: String, text: String, postedAt: Long,
-        notificationKey: String? = null, eventTime: Long? = null) {
+        notificationKey: String? = null, eventTime: Long? = null, packageName: String = sourceApp.name) {
         val input = NotificationInput(sourceApp = sourceApp, title = title, text = text, postedAt = postedAt)
-        val hash = NotificationRepository.hashPayload(sourceApp.name, sourceApp.name, title, text, postedAt)
+        val hash = NotificationRepository.hashPayload(sourceApp.name, packageName, title, text, postedAt)
         val observation = NotificationObservationEntity(
-            sourceApp = sourceApp, packageName = sourceApp.name, notificationKey = notificationKey,
+            sourceApp = sourceApp, packageName = packageName, notificationKey = notificationKey,
             title = title, text = text, bigText = null, subText = null, textLines = null,
             postedAt = postedAt, receivedAt = postedAt, rawPayloadHash = hash,
             parserVersion = ParserRegistry.PARSER_VERSION, parseStatus = ParseStatus.PENDING, eventTime = eventTime
@@ -316,4 +317,75 @@ class NotificationToLedgerIntegrationTest {
         assertEquals(15000000L - 3L, accountRepository.getById(bcaAccountId)!!.currentEstimatedBalance)
         assertEquals(1, db.transactionDao().getAllOnce().count { it.reviewReason == com.luxwallet.app.core.model.ReviewReason.POSSIBLE_DUPLICATE })
     }
+    @Test fun crossBcaReferenceMergesOneEventAndBothObservations() = runBlocking {
+        ingestNotification(SourceApp.MYBCA, "Catatan Finansial", "Pengeluaran sebesar IDR 3.00 di kategori Belanja Bulanan. No Ref: ABC12345", 10000, packageName = "com.bca.mybca")
+        ingestNotification(SourceApp.MYBCA, "BCA mobile", "Pembayaran QRIS berhasil Rp3.00 Merchant: TOKO INTAN; No Ref: ABC12345", 12000, packageName = "com.bca")
+        assertEquals(1, db.transactionDao().getAllOnce().size)
+        assertEquals(1, db.ledgerEntryDao().getAllOnce().size)
+        assertEquals(2, db.notificationObservationDao().linkedInRange(0, Long.MAX_VALUE).size)
+        assertEquals(1, db.notificationObservationDao().linkedInRange(0, Long.MAX_VALUE).map { it.linkedTransactionId }.distinct().size)
+        assertEquals(14999997L, accountRepository.getById(bcaAccountId)!!.currentEstimatedBalance)
+    }
+    @Test fun crossBcaWithoutStrongIdentityIsHeldForReview() = runBlocking {
+        ingestNotification(SourceApp.MYBCA, "Catatan Finansial", "Pengeluaran sebesar IDR 3.00 di kategori Belanja Bulanan.", 10000, packageName = "com.bca.mybca")
+        ingestNotification(SourceApp.MYBCA, "BCA mobile", "Pembayaran QRIS berhasil Rp3.00 Merchant: TOKO INTAN", 12000, packageName = "com.bca")
+        assertEquals(2, db.transactionDao().getAllOnce().size)
+        assertEquals(1, db.transactionDao().getAllOnce().count { it.reviewReason == com.luxwallet.app.core.model.ReviewReason.POSSIBLE_DUPLICATE })
+        assertEquals(14999997L, accountRepository.getById(bcaAccountId)!!.currentEstimatedBalance)
+    }
+    @Test fun crossBcaDifferentPartiesOrTimesRemainIndependent() = runBlocking {
+        ingestNotification(SourceApp.MYBCA, "BCA mobile", "Pembayaran QRIS berhasil Rp3.00 Merchant: TOKO INTAN", 10000, packageName = "com.bca")
+        ingestNotification(SourceApp.MYBCA, "myBCA", "Pembayaran QRIS berhasil Rp3.00 Merchant: TOKO BERLIAN", 12000, packageName = "com.bca.mybca")
+        ingestNotification(SourceApp.MYBCA, "myBCA", "Pembayaran QRIS berhasil Rp3.00 Merchant: TOKO INTAN", 200000, packageName = "com.bca.mybca")
+        assertEquals(3, db.transactionDao().getAllOnce().size)
+        assertEquals(14999991L, accountRepository.getById(bcaAccountId)!!.currentEstimatedBalance)
+    }
+    @Test fun detailsSaveIsAtomicAndDoesNotWriteAnotherLedger() = runBlocking {
+        ingestNotification(SourceApp.MYBCA, "Catatan Finansial", "Pengeluaran sebesar IDR 3.00 di kategori Belanja Bulanan.", 10000)
+        val id = db.transactionDao().getAllOnce().single().id
+        val category = categoryRepository.resolveOrCreateTopLevel("Food & Drink")
+        repeat(2) { transactionRepository.saveDetails(id, "Toko", "Catatan", category, false, true) }
+        assertEquals(1, db.transactionDao().getAllOnce().size)
+        assertEquals(1, db.ledgerEntryDao().getAllOnce().size)
+        assertEquals(category, db.transactionDao().getById(id)!!.categoryId)
+        assertEquals(14999997L, accountRepository.getById(bcaAccountId)!!.currentEstimatedBalance)
+    }
+    @Test fun assetCrudArchiveAndRestorePreserveHistoryAndBackupRows() = runBlocking {
+        val assets = com.luxwallet.app.data.AssetRepository(db.assetDao())
+        val asset = com.luxwallet.app.core.database.entity.AssetEntity(name = "Emas", assetClass = com.luxwallet.app.core.model.AssetClass.EMAS, currentValue = 100000, updatedAt = 1)
+        val id = assets.upsert(asset)
+        assets.upsert(asset.copy(id = id, currentValue = 200000))
+        assertEquals(200000L, assets.observeTotalValue().first())
+        assets.delete(asset.copy(id = id))
+        assertEquals(0L, assets.observeTotalValue().first())
+        assertTrue(db.assetDao().getAllOnce().single().isArchived)
+        assets.restore(id)
+        assertEquals(200000L, assets.observeTotalValue().first())
+        ingestNotification(SourceApp.MYBCA, "Catatan Finansial", "Pengeluaran sebesar IDR 3.00 di kategori Belanja Bulanan.", 10000)
+        transactionRepository.updateAccountValue(bcaAccountId, "BCA pribadi", 14999997)
+        accountRepository.setActive(bcaAccountId, false)
+        assertEquals(1, db.transactionDao().getAllOnce().size)
+        assertEquals(1, db.ledgerEntryDao().getAllOnce().size)
+        assertEquals("BCA pribadi", accountRepository.getById(bcaAccountId)!!.name)
+        assertTrue(accountRepository.observeActiveAccounts().first().none { it.id == bcaAccountId })
+        accountRepository.setActive(bcaAccountId, true)
+        assertEquals(14999997L, accountRepository.getById(bcaAccountId)!!.currentEstimatedBalance)
+    }
+
+    @Test fun multipleBcaAccountsStayUncountedUntilUserAssignsAccount() = runBlocking {
+        accountRepository.createAccount("BCA kedua", AccountKind.BANK, AccountProvider.BCA, 0, 0)
+        val body = "Pengeluaran sebesar IDR 3.00 di kategori Belanja Bulanan."
+        ingestNotification(SourceApp.MYBCA, "Catatan Finansial", body, 10000, "same", 9000)
+        ingestNotification(SourceApp.MYBCA, "Catatan Finansial", body, 12000, "same", 9000)
+        val tx = db.transactionDao().getAllOnce().single()
+        assertEquals(null, tx.sourceAccountId)
+        assertEquals(0L, com.luxwallet.app.core.common.CashflowMath.totalExpense(listOf(tx)))
+        assertTrue(db.ledgerEntryDao().getAllOnce().isEmpty())
+        transactionRepository.saveDetails(tx.id, "", "", null, false, false, bcaAccountId)
+        transactionRepository.saveDetails(tx.id, "", "", null, false, false, bcaAccountId)
+        assertEquals(1, db.ledgerEntryDao().getAllOnce().size)
+        assertEquals(14999997L, accountRepository.getById(bcaAccountId)!!.currentEstimatedBalance)
+        assertEquals(3L, com.luxwallet.app.core.common.CashflowMath.totalExpense(db.transactionDao().getAllOnce()))
+    }
+
 }

@@ -65,6 +65,7 @@ class MyBcaNotificationParser : NotificationParser {
                 direction = direction,
                 amount = amount,
                 type = type,
+                referenceNumber = com.luxwallet.app.engine.BcaDuplicateEvidence.reference(text),
                 merchantName = null, // myBCA never names a merchant; never invented.
                 counterpartyName = counterparty,
                 explicitCategory = category,

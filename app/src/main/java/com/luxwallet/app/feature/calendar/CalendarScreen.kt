@@ -45,6 +45,7 @@ import java.util.Locale
     val eligible = remember(state.transactions) { CashflowMath.cashflowEligible(state.transactions) }
     val grouped = remember(eligible) { eligible.groupBy { Instant.ofEpochMilli(it.transactionTime).atZone(zone).toLocalDate() } }
     fun money(value: Long) = if (hidden) "********" else AmountFormat.rupiah(value)
+    fun summaryMoney(value: Long) = if (hidden) "********" else (if (value < 0) "−Rp" else "Rp") + com.luxwallet.app.core.common.compactCashflow(value).removePrefix("+").removePrefix("−")
     fun changeMonth(value: YearMonth) { monthText = value.toString(); selectedDay = value.atDay(1).toEpochDay() }
     LazyColumn(contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 96.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item { Text("Kalender keuangan", style = MaterialTheme.typography.headlineSmall) }
@@ -59,11 +60,14 @@ import java.util.Locale
         } }
         item {
             val monthly = grouped.filterKeys { YearMonth.from(it) == month }.values.flatten()
-            OutlinedCard { Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text("Masuk ${money(CashflowMath.totalIncome(monthly))}")
-                Text("Keluar ${money(CashflowMath.totalExpense(monthly))}")
-                Text("Selisih ${money(CashflowMath.totalIncome(monthly) - CashflowMath.totalExpense(monthly))}", style = MaterialTheme.typography.titleMedium)
-            } }
+            val income = CashflowMath.totalIncome(monthly)
+            val expense = CashflowMath.totalExpense(monthly)
+            val colors = com.luxwallet.app.core.ui.theme.LocalLuxSemanticColors.current
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                com.luxwallet.app.core.ui.component.FinancialMetric("Masuk", summaryMoney(income), Modifier.weight(1f), if (hidden || income == 0L) MaterialTheme.colorScheme.onSurfaceVariant else colors.income)
+                com.luxwallet.app.core.ui.component.FinancialMetric("Keluar", summaryMoney(expense), Modifier.weight(1f), if (hidden || expense == 0L) MaterialTheme.colorScheme.onSurfaceVariant else colors.expense)
+                com.luxwallet.app.core.ui.component.FinancialMetric("Selisih", summaryMoney(income - expense), Modifier.weight(1f), if (hidden || income == expense) MaterialTheme.colorScheme.onSurfaceVariant else if (income > expense) colors.income else colors.expense)
+            }
         }
         item {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -97,7 +101,29 @@ import java.util.Locale
                 }
             }
         }
-        item { Text("Angka harian = pemasukan − pengeluaran. K = ribu · M = juta. Budget tersedia di rincian tanggal.", style = MaterialTheme.typography.bodySmall) }
+        item {
+            val points = remember(state.transactions, month, state.today) { expenseTrend(state.transactions, month, state.today) }
+            ExpenseTrendChart(points, selected, hidden) { selectedDay = it.toEpochDay() }
+        }
+        item {
+            val adaptive = state.adaptive
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Saran budget hari ini", style = MaterialTheme.typography.titleMedium)
+                if (adaptive == null) TextButton({ onNavigate(LuxDestinations.PLANNER) }) { Text("Buat rencana untuk melihat rekomendasi") }
+                else {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        com.luxwallet.app.core.ui.component.FinancialMetric("Rekomendasi / hari", money(adaptive.recommended), Modifier.weight(1f))
+                        com.luxwallet.app.core.ui.component.FinancialMetric("Budget tersimpan", money(adaptive.current), Modifier.weight(1f))
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        com.luxwallet.app.core.ui.component.FinancialMetric("Sisa budget hari ini", money(adaptive.remaining), Modifier.weight(1f))
+                        com.luxwallet.app.core.ui.component.FinancialMetric("Aman dibelanjakan", money(adaptive.safeToSpend), Modifier.weight(1f))
+                    }
+                    Text("Saran untuk ${state.today.format(planDateFormat)} · ${adaptive.daysRemaining} hari tersisa. Cadangan tagihan, transportasi, penyangga, dan tabungan tetap dilindungi. Budget tersimpan tidak diubah.", style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        }
+        item { Text("Angka harian = pemasukan − pengeluaran. K = ribu · M = juta · B = miliar. Budget tersedia di rincian tanggal.", style = MaterialTheme.typography.bodySmall) }
         item {
             val txs = grouped[selected].orEmpty()
             val plan = PaydayPlan.forDay(state.plans, selected)

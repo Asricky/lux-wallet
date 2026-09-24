@@ -47,7 +47,7 @@ import com.luxwallet.app.core.database.entity.TransactionEntity
         FinancialProfileEntity::class,
         com.luxwallet.app.core.database.entity.PaydayPlanEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -81,6 +81,11 @@ abstract class LuxDatabase : RoomDatabase() {
         val MIGRATION_3_4 = object : androidx.room.migration.Migration(3, 4) {
             override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
                 db.execSQL("CREATE TABLE IF NOT EXISTS transaction_confirmations (transactionId INTEGER NOT NULL, dueAt INTEGER NOT NULL, handled INTEGER NOT NULL, PRIMARY KEY(transactionId))")
+            }
+        }
+        val MIGRATION_4_5 = object : androidx.room.migration.Migration(4, 5) {
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE assets ADD COLUMN isArchived INTEGER NOT NULL DEFAULT 0")
             }
         }
         const val DATABASE_NAME = "lux_wallet.db"

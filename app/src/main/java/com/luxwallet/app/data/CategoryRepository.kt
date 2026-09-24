@@ -4,11 +4,12 @@ import com.luxwallet.app.core.database.DefaultCategories
 import com.luxwallet.app.core.database.dao.CategoryDao
 import com.luxwallet.app.core.database.entity.CategoryEntity
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 class CategoryRepository(private val categoryDao: CategoryDao) {
 
-    fun observeMainCategories(): Flow<List<CategoryEntity>> = categoryDao.observeMainCategories()
-    fun observeAll(): Flow<List<CategoryEntity>> = categoryDao.observeAll()
+    fun observeMainCategories(): Flow<List<CategoryEntity>> = categoryDao.observeMainCategories().map(::prioritizeCategories)
+    fun observeAll(): Flow<List<CategoryEntity>> = categoryDao.observeAll().map(::prioritizeCategories)
 
     suspend fun seedDefaultsIfEmpty() {
         if (categoryDao.count() > 0) return
@@ -38,3 +39,7 @@ class CategoryRepository(private val categoryDao: CategoryDao) {
 
     suspend fun getById(id: Long) = categoryDao.getById(id)
 }
+
+fun prioritizeCategories(categories: List<CategoryEntity>) = categories.sortedWith(
+    compareBy<CategoryEntity> { if (it.name.trim().equals("Food & Drink", ignoreCase = true)) 0 else 1 }
+        .thenBy { it.name.lowercase(java.util.Locale.ROOT) })
