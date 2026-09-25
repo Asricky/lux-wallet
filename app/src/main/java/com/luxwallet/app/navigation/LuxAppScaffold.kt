@@ -33,7 +33,7 @@ fun NavHostController.openScreen(route: String) {
 }
 
 private fun screenTitle(route: String?) = when (route) {
-    LuxDestinations.ALERT_SETTINGS -> "Notifikasi Lux Wallet"
+    LuxDestinations.ALERT_SETTINGS -> "Notifikasi Lumi"
     LuxDestinations.QUICK_ADD -> "Catat transaksi"
     LuxDestinations.TRANSACTION_DETAIL -> "Detail transaksi"
     LuxDestinations.TRANSACTIONS -> "Riwayat transaksi"
@@ -50,7 +50,7 @@ private fun screenTitle(route: String?) = when (route) {
     LuxDestinations.NEEDS_REVIEW -> "Perlu ditinjau"
     LuxDestinations.INSIGHTS -> "Wawasan keuangan"
     LuxDestinations.NOTIFICATION_LAB -> "Diagnostik notifikasi"
-    else -> "Lux Wallet"
+    else -> "Lumi"
 }
 
 @Composable

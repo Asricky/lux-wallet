@@ -32,7 +32,7 @@ object TransactionNotifications {
     const val WORK = "transaction_confirmations"
     fun createChannel(context: Context) {
         context.getSystemService(NotificationManager::class.java).createNotificationChannel(
-            NotificationChannel(CHANNEL, "Lux Wallet Transactions", NotificationManager.IMPORTANCE_DEFAULT).apply {
+            NotificationChannel(CHANNEL, "Lumi Transactions", NotificationManager.IMPORTANCE_DEFAULT).apply {
                 description = "Konfirmasi pencatatan transaksi dan peringatan budget"
                 lockscreenVisibility = Notification.VISIBILITY_PRIVATE
             })
@@ -64,7 +64,7 @@ object TransactionNotifications {
     fun send(context: Context, tx: TransactionEntity, source: String?, destination: String?, hidden: Boolean): Boolean {
         if (!allowed(context)) return false
         val text = when {
-            hidden -> "Buka Lux Wallet untuk melihat rincian."
+            hidden -> "Buka Lumi untuk melihat rincian."
             tx.reviewStatus == ReviewStatus.NEEDS_REVIEW -> "${AmountFormat.rupiah(tx.amount)} terdeteksi. Periksa rekening atau kategorinya."
             tx.isInternalTransfer -> "${AmountFormat.rupiah(tx.amount)} · ${source ?: "Rekening"} ke ${destination ?: "Rekening"}"
             else -> "${AmountFormat.rupiah(tx.amount)} · ${source ?: "Rekening"}${(tx.merchantName ?: tx.counterpartyName)?.let { " · $it" } ?: ""}"
@@ -74,7 +74,7 @@ object TransactionNotifications {
             .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
         val pending = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         val public = NotificationCompat.Builder(context, CHANNEL).setSmallIcon(R.drawable.ic_notification_lumi)
-            .setContentTitle("Lux Wallet").setContentText("Ada pembaruan transaksi.").build()
+            .setContentTitle("Lumi").setContentText("Ada pembaruan transaksi.").build()
         val notification = NotificationCompat.Builder(context, CHANNEL).setSmallIcon(R.drawable.ic_notification_lumi)
             .setContentTitle(title(tx)).setContentText(text).setStyle(NotificationCompat.BigTextStyle().bigText(text))
             .setContentIntent(pending).setAutoCancel(true).setOnlyAlertOnce(true)

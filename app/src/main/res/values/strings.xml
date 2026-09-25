@@ -1,4 +1,4 @@
 <resources>
-    <string name="app_name">Lux Wallet</string>
-    <string name="notification_listener_label">Lux Wallet Transaction Reader</string>
+    <string name="app_name">Lumi</string>
+    <string name="notification_listener_label">Lumi Transaction Reader</string>
 </resources>

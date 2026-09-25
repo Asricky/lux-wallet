@@ -39,6 +39,13 @@ class CoachNotificationTest {
         CoachNotifications.configure(context, false)
         assertNull(shadowOf(manager).getNotification(CoachNotifications.ID))
     }
+    @Test fun publicAppNameIsLumiAndInstalledPackageRemainsCompatible() {
+        val context = ApplicationProvider.getApplicationContext<android.app.Application>()
+        assertEquals("Lumi", context.getString(com.luxwallet.app.R.string.app_name))
+        assertEquals("com.luxwallet.app.debug", context.packageName)
+        val info = context.packageManager.getApplicationInfo(context.packageName, 0)
+        assertEquals("Lumi", context.packageManager.getApplicationLabel(info).toString())
+    }
     @Test fun changingMascotAlwaysLeavesExactlyOneLauncherEnabled() {
         val context = ApplicationProvider.getApplicationContext<android.app.Application>()
         val names = LumiLauncher.names

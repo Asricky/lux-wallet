@@ -13,5 +13,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "LuxWallet"
+rootProject.name = "Lumi"
 include(":app")

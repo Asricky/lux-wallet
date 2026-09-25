@@ -3,7 +3,7 @@ package com.luxwallet.app.notification
 import com.luxwallet.app.core.model.SourceApp
 
 /**
- * The hard allowlist gate (PRD §8): Lux Wallet only ever processes notifications whose package
+ * The hard allowlist gate (PRD §8): Lumi only ever processes notifications whose package
  * name is in this map, or in the user's own explicit mapping. Everything else — Gmail, SMS,
  * WhatsApp, any other app — is dropped before it ever reaches a parser, regardless of what its
  * text looks like.

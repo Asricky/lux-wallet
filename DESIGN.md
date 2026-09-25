@@ -1,10 +1,10 @@
-# Lux Wallet — Panduan desain
+# Lumi — Panduan desain
 
-Revisi 24 September 2026 · v5. Perhitungan dan perilaku: [PRD.md](PRD.md).
+Revisi 25 September 2026 · v6. Perhitungan dan perilaku: [PRD.md](PRD.md).
 
 ## Arah produk
 
-Aplikasi keuangan personal yang tenang, ringkas, dan ramah. Dahulukan nominal yang mudah dibaca, keadaan uang sebenarnya, serta satu tindakan yang jelas. Pola bank/dompet digital menjadi referensi interaksi familiar; identitas Lux Wallet tetap mengikuti Lumi milik produk.
+Aplikasi keuangan personal yang tenang, ringkas, dan ramah. Dahulukan nominal yang mudah dibaca, keadaan uang sebenarnya, serta satu tindakan yang jelas. Pola bank/dompet digital menjadi referensi interaksi familiar; identitas Lumi tetap mengikuti Lumi milik produk.
 
 ## Identitas Lumi
 
@@ -26,7 +26,7 @@ Lumi: penguin teal, wajah krem, paruh emas, koin di atas jambul. Acuan cover akt
 
 Risiko budget mendahului ekspresi peristiwa. Tidak mengarang pencapaian/angka. Sisa anggaran tidak dicatat menjadi pendapatan. Maksimal satu Lumi utama per layar; ukuran 64–100 dp untuk pendamping informasi, 140 dp untuk onboarding. Jangan tampilkan avatar kosong atau hukuman visual.
 
-Launcher memakai sembilan adaptive icon dari atlas cover yang sama. InsetDrawable persentase memilih wilayah sumber dan inset luar mengimbangi perluasan adaptive foreground; ikon tetap proporsional pada berbagai ukuran. Implementasi mengikuti [InsetDrawable Android](https://android.googlesource.com/platform/frameworks/base/+/refs/heads/main/graphics/java/android/graphics/drawable/InsetDrawable.java). Sembilan alias mood serta Focus lama tetap dideklarasikan. Aktifkan tujuan sebelum menonaktifkan alias lain dengan DONT_KILL_APP. Mode AUTO memakai state keuangan terpusat, mengikuti transaksi dan rencana selama proses berjalan; launcher dapat menunda penyegaran. Nama launcher tetap Lux Wallet.
+Launcher memakai sembilan adaptive icon dari atlas cover yang sama. InsetDrawable persentase memilih wilayah sumber dan inset luar mengimbangi perluasan adaptive foreground; ikon tetap proporsional pada berbagai ukuran. Implementasi mengikuti [InsetDrawable Android](https://android.googlesource.com/platform/frameworks/base/+/refs/heads/main/graphics/java/android/graphics/drawable/InsetDrawable.java). Sembilan alias mood serta Focus lama tetap dideklarasikan. Aktifkan tujuan sebelum menonaktifkan alias lain dengan DONT_KILL_APP. Mode AUTO memakai state keuangan terpusat, mengikuti transaksi dan rencana selama proses berjalan; launcher dapat menunda penyegaran. Nama launcher tetap Lumi.
 
 ## Warna
 
@@ -73,7 +73,7 @@ Budget ditampilkan terpisah: batas, pemakaian, sisa, persen dan progress bar (vi
 
 Bahasa Indonesia singkat dan tidak menghakimi: “Yuk, susun ulang belanja hari ini”, “Ada transaksi yang perlu kamu cek”. Sertakan alasan nyata, jangan menjanjikan hasil investasi.
 
-Konfirmasi memakai channel Lux Wallet Transactions dan ID logis transaksi. Antrean persisten mencegah duplikat/replay. Transfer ditunda saat menunggu pasangan; pembatasan Android dapat menambah jeda. Satu snackbar singkat tanpa modal, dengan aksi Lihat ketika aplikasi aktif. Pesan layar kunci selalu umum; nominal hanya ada pada notifikasi privat jika mode hide tidak aktif. Pengingat harian edukasi terpisah, opt-in, maksimal sekali sehari pada jam siang.
+Konfirmasi memakai channel Lumi Transactions dan ID logis transaksi. Antrean persisten mencegah duplikat/replay. Transfer ditunda saat menunggu pasangan; pembatasan Android dapat menambah jeda. Satu snackbar singkat tanpa modal, dengan aksi Lihat ketika aplikasi aktif. Pesan layar kunci selalu umum; nominal hanya ada pada notifikasi privat jika mode hide tidak aktif. Pengingat harian edukasi terpisah, opt-in, maksimal sekali sehari pada jam siang.
 
 ## Pemeriksaan dan rilis
 
@@ -92,3 +92,10 @@ Setiap update harus menyertakan CHANGELOG dan menjalankan `build-update.ps1`. RE
 - Review: kartu ringkas dengan Tinjau/Hapus; dialog singkat sebelum mengabaikan catatan. Detail menyimpan draft sekaligus lalu menuju Beranda. Tidak melakukan perubahan kategori saat pemilih sekadar diketuk.
 - Aset: edit nama/nilai pada sheet, aksi arsip dengan konfirmasi, arsip aset dapat dipulihkan. Rekening memiliki status aktif/arsip, histori tidak dihapus.
 - Pengaturan notifikasi: status Active/Inactive/Permission Required disertai bahasa Indonesia, tombol akses sistem, dan dua timestamp diagnostik. Jangan mengklaim pasti merekam notifikasi saat Android membatasi proses.
+
+
+## Identitas publik dan tinjauan v6
+
+Nama produk adalah **Lumi** di seluruh permukaan pengguna. Gambar hero README memakai hasil render ikon launcher asli; jangan menggambar ulang maskot. README memakai satu CTA unduhan utama, fitur ringkas dalam tabel, dan detail checksum yang dapat dibuka. Panduan panjang dipisahkan ke docs/USER_GUIDE.md.
+
+Tinjauan: toolbar jumlah pilihan + Pilih semua/Batal pilih + Hapus terpilih tetap di atas daftar. Kartu menampilkan sumber/nominal, waktu, status, pesan asli empat baris awal (Selengkapnya untuk memperluas), checkbox kanan, dan aksi Tinjau/Hapus. Pilihan memakai warna primaryContainer dan checkbox agar tidak bergantung pada warna saja. Konfirmasi batch satu kali dengan jumlah catatan. Jangan menghilangkan pesan demi kartu yang tampak ringkas; sediakan perluasan. Saat mode hide aktif seluruh digit pesan disamarkan.

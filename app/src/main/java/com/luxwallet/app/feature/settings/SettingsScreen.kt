@@ -167,9 +167,9 @@ fun SettingsScreen(
 
         item {
             SettingsSection("Cadangan data") {
-                SettingsLinkRow("Ekspor cadangan terenkripsi") { exportLauncher.launch("lux-wallet-backup.bin") }
+                SettingsLinkRow("Ekspor cadangan terenkripsi") { exportLauncher.launch("lumi-backup.bin") }
                 SettingsLinkRow("Pulihkan cadangan") { restoreLauncher.launch(arrayOf("*/*")) }
-                SettingsLinkRow("Ekspor transaksi (CSV)") { csvExportLauncher.launch("lux-wallet-transactions.csv") }
+                SettingsLinkRow("Ekspor transaksi (CSV)") { csvExportLauncher.launch("lumi-transactions.csv") }
             }
         }
 

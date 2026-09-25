@@ -1,19 +1,16 @@
-# Rencana penyempurnaan v5
+# Pembaruan Lumi v6
 
-Audit: aplikasi Compose/NavHost, ledger atomik Room v4, DataStore dan WorkManager. Detail saat ini menyimpan kategori di luar konfirmasi dan tidak menavigasi setelah sukses; perbaiki menjadi satu penyimpanan atomik. Listener sudah berdiri sendiri tetapi pemulihan process/boot belum lengkap. Deduplikasi masih bergantung pada pasangan paket. Kalender memakai PaydayMath dengan snapshot historis; rekomendasi baru harus terpisah dari target tersimpan.
+## Cakupan
 
-1. Gunakan sembilan wilayah gambar Lumi-app-cover melalui drawable native dan alias launcher; pertahankan alias lama untuk upgrade.
-2. Simpan detail atomik, cegah klik ganda, kembali ke Beranda setelah sukses; Food & Drink paling atas; review ringkas dengan tinjau/hapus berkonfirmasi.
-3. Tambah arsip aset melalui migrasi v4 ke v5; rekening selalu diarsipkan agar ledger/histori tetap utuh.
-4. Pulihkan listener lewat lifecycle service, startup/boot/update dan retry terbatas, bukan polling; status dan diagnostics persisten.
-5. Deduplikasi lintas BCA memakai bukti referensi/isi/merchant yang kuat; kandidat ambigu tetap ditinjau tanpa nominal kedua.
-6. Kalender ringkasan visual, rekomendasi budget transparan dan grafik periode aktif; ringkas Rencana/Saran Lumi.
-7. Regresi navigasi, ledger, dedup, arsip, migrasi, listener, ikon, grafik dan rekomendasi; render, lint, build APK v5, README otomatis dan push.
+- Nama publik Lumi untuk aplikasi, launcher, notifikasi, ekspor, dan repository Asricky/lumi.
+- Application ID, sertifikat, database, namespace, ID channel serta alias lama dipertahankan agar upgrade menjaga data.
+- Pesan asli langsung terlihat dalam tinjauan; digit disamarkan mengikuti mode privasi.
+- Checkbox per kartu, pilih semua/batal pilih, hapus terpilih, satu konfirmasi batch.
+- Hapus atomik, pengecekan ulang status, ledger hanya untuk transaksi terkait, dan rollback seluruh batch saat gagal.
+- README ringkas, hero ikon native, tautan APK v6, panduan terpisah, dan updater rilis yang mempertahankan struktur.
 
+## Validasi dan distribusi
 
-## Implementasi v5
+Pengujian mencakup pesan/privasi, pilihan campuran transaksi dan notifikasi gagal, pembatalan, snapshot pilihan ketika notifikasi baru masuk, idempotensi, rollback ledger, serta label aplikasi dan package upgrade. Seluruh regresi, lint, dan APK bernomor diselesaikan sebelum rename repo serta push sebagai Asricky. Berkas lokal dan kredensial tidak disertakan.
 
-- Selesai: transaksi atomik dan navigasi setelah commit, kategori prioritas, arsip aset/rekening, migrasi 4→5, parser/deduplikasi BCA lintas aplikasi, pemulihan listener dan diagnostics.
-- Selesai: sembilan cover native dan alias launcher, mood aktual terpusat, metrik kalender/planner, rekomendasi adaptif, tren bulanan, Saran Lumi ringkas.
-- Verifikasi selesai: 137 pengujian lulus; lint 0 error; build APK v5 berhasil. Rendering native, migrasi v1/v2/v3/v4, dan pemulihan listener tanpa Activity diperiksa. Sertifikat signing sesuai versi sebelumnya.
-- Distribusi: app-debug-v5.apk, README otomatis, checksum, signing tetap, lalu push main dengan identitas Asricky.
+Hasil v6: 141 pengujian lulus (0 gagal), lint 0 error dan 13 peringatan, APK 1.0.6 berlabel Lumi. Tinjauan diverifikasi melalui rendering native pada lebar 320 dp dan 393 dp. Sertifikat APK cocok dengan versi sebelumnya. Pengujian pada HP fisik belum dilakukan.

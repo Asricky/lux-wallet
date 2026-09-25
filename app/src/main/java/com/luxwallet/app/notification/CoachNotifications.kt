@@ -42,7 +42,7 @@ object CoachNotifications {
             .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
         val pending = PendingIntent.getActivity(context, ID, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         val public = NotificationCompat.Builder(context, CHANNEL).setSmallIcon(R.drawable.ic_notification_lumi)
-            .setContentTitle("Lumi · Lux Wallet").setContentText("Ada saran untuk rencana uangmu.").build()
+            .setContentTitle("Lumi").setContentText("Ada saran untuk rencana uangmu.").build()
         val notification = NotificationCompat.Builder(context, CHANNEL).setSmallIcon(R.drawable.ic_notification_lumi)
             .setContentTitle("Lumi · ${advice.title}").setContentText(advice.message)
             .setStyle(NotificationCompat.BigTextStyle().bigText(advice.message))

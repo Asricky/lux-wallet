@@ -30,7 +30,7 @@ object BudgetAlerts {
         val intent = Intent(app, MainActivity::class.java).putExtra("open_coach", true)
         val pending = PendingIntent.getActivity(app, 3102, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         val public = NotificationCompat.Builder(app, TransactionNotifications.CHANNEL).setSmallIcon(R.drawable.ic_notification_lumi)
-            .setContentTitle("Lumi · Lux Wallet").setContentText("Periksa rencana harianmu.").build()
+            .setContentTitle("Lumi").setContentText("Periksa rencana harianmu.").build()
         val notification = NotificationCompat.Builder(app, TransactionNotifications.CHANNEL).setSmallIcon(R.drawable.ic_notification_lumi)
             .setContentTitle(title).setContentText("Dahulukan kebutuhan utama. Buka rencana untuk melihat pilihan alokasi.")
             .setContentIntent(pending).setAutoCancel(true).setOnlyAlertOnce(true)

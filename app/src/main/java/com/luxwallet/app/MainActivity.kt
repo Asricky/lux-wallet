@@ -153,7 +153,7 @@ private fun LockedScreen(onRetry: () -> Unit) {
         horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
         verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center
     ) {
-        Text("Lux Wallet terkunci")
+        Text("Lumi terkunci")
         androidx.compose.material3.TextButton(onClick = onRetry) { Text("Buka kunci") }
     }
 }

@@ -32,6 +32,10 @@ class LumiCoverTest {
             val image = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
             icon.setBounds(0, 0, size, size)
             icon.draw(Canvas(image))
+            if (id == R.mipmap.ic_launcher) {
+                java.io.File("build/reports/ui").mkdirs()
+                java.io.File("build/reports/ui/lumi-icon.png").outputStream().use { image.compress(Bitmap.CompressFormat.PNG, 100, it) }
+            }
             assertTrue(Color.alpha(image.getPixel(size / 2, size / 2)) > 0)
             pixels += image.getPixel(size / 2, size / 2)
             canvas.drawBitmap(image, (i % 3 * 192 + (192 - size) / 2).toFloat(), (i / 3 * 192).toFloat(), Paint())

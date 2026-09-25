@@ -189,15 +189,18 @@ class AppJourneyTest {
             Assert.assertEquals(100000L, app.accountRepository.observeActiveAccounts().first().first().currentEstimatedBalance)
         }
     }
-    @Test fun reviewDeleteRequiresConfirmationAndRemovesOnlyReviewItem() {
+    @Test
+    @Config(sdk = [34], application = LuxWalletApp::class, qualifiers = "w320dp-h740dp-mdpi")
+    @org.robolectric.annotation.GraphicsMode(org.robolectric.annotation.GraphicsMode.Mode.NATIVE)
+    fun reviewDeleteRequiresConfirmationAndRemovesOnlyReviewItem() {
         val id = reviewTransaction()
         launch()
         compose.runOnIdle { nav.openScreen(LuxDestinations.NEEDS_REVIEW) }
         compose.waitUntil(5000) { compose.onAllNodesWithText("Hapus").fetchSemanticsNodes().isNotEmpty() }
-        compose.onNodeWithText("Hapus").performClick()
+        compose.onNodeWithText("Hapus").performScrollTo().performClick()
         compose.onNodeWithText("Batal").performClick()
-        compose.onNodeWithText("Tinjau").assertIsDisplayed()
-        compose.onNodeWithText("Hapus").performClick()
+        compose.onNodeWithText("Tinjau").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Hapus").performScrollTo().performClick()
         compose.onNodeWithText("Hapus catatan").performClick()
         compose.waitUntil(5000) { compose.onAllNodesWithText("Semua sudah ditinjau.").fetchSemanticsNodes().isNotEmpty() }
         Assert.assertNotNull(runBlocking { app.database.transactionDao().getById(id) })
@@ -243,6 +246,63 @@ class AppJourneyTest {
             .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.SetProgress) { it(0f) }
         compose.onNodeWithText("1 · Rp0").assertExists()
         capture("trend-320.png")
+    }
+
+    @Test
+    @Config(sdk = [34], application = LuxWalletApp::class, qualifiers = "w393dp-h851dp-mdpi")
+    @org.robolectric.annotation.GraphicsMode(org.robolectric.annotation.GraphicsMode.Mode.NATIVE)
+    fun reviewShowsMessageAndDeletesOnlySnapshotSelectionTogether() {
+        val first = reviewTransaction()
+        val second = reviewTransaction()
+        val now = System.currentTimeMillis()
+        runBlocking {
+            val original = com.luxwallet.app.core.database.entity.NotificationObservationEntity(
+                sourceApp = SourceApp.MYBCA, packageName = "com.bca.mybca", notificationKey = "test",
+                title = "Pembayaran berhasil", text = "Pembayaran QRIS Rp3.000 di TOKO INTAN.", bigText = null,
+                subText = null, textLines = null, postedAt = now, receivedAt = now, rawPayloadHash = "review-preview",
+                parserVersion = 3, parseStatus = ParseStatus.PARSED, linkedTransactionId = first)
+            app.notificationRepository.insertIfNew(original)
+            app.notificationRepository.insertIfNew(original.copy(notificationKey = "unknown", rawPayloadHash = "review-unknown",
+                title = "Pesan bank", text = "Transfer masuk Rp50.000 perlu diperiksa.", parseStatus = ParseStatus.FAILED, linkedTransactionId = null))
+        }
+        var hidden by mutableStateOf(false)
+        lateinit var view: android.view.View
+        compose.setContent {
+            view = androidx.compose.ui.platform.LocalView.current
+            nav = rememberNavController()
+            CompositionLocalProvider(com.luxwallet.app.core.common.LocalAmountsHidden provides hidden) {
+                LuxWalletTheme { LuxAppScaffold(nav) }
+            }
+        }
+        compose.runOnIdle { nav.openScreen(LuxDestinations.NEEDS_REVIEW) }
+        compose.waitUntil(5000) { compose.onAllNodesWithText("3 catatan menunggu keputusan").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText("Pembayaran berhasil\nPembayaran QRIS Rp3.000 di TOKO INTAN.").performScrollTo().assertIsDisplayed()
+        compose.runOnIdle { hidden = true }
+        compose.onNodeWithText("Pembayaran berhasil\nPembayaran QRIS Rp•.••• di TOKO INTAN.").assertIsDisplayed()
+        compose.runOnIdle { hidden = false }
+        compose.onNodeWithText("Pilih semua").performClick()
+        compose.onNodeWithText("3 catatan dipilih").assertIsDisplayed()
+        compose.onNodeWithText("Batal pilih").performClick()
+        compose.onNodeWithContentDescription("Pilih catatan tx:$first").performScrollTo().performClick()
+        compose.onNodeWithText("1 catatan dipilih").assertIsDisplayed()
+        compose.onNodeWithText("Pilih semua").performClick()
+        compose.waitForIdle()
+        val bitmap = android.graphics.Bitmap.createBitmap(view.width, view.height, android.graphics.Bitmap.Config.ARGB_8888)
+        compose.runOnIdle { view.draw(android.graphics.Canvas(bitmap)) }
+        java.io.File("build/reports/ui").mkdirs()
+        java.io.File("build/reports/ui/review-v6.png").outputStream().use { bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
+        compose.onNodeWithText("Hapus terpilih (3)").performClick()
+        compose.onNodeWithText("Batal").performClick()
+        compose.onNodeWithText("Hapus terpilih (3)").performClick()
+        val later = reviewTransaction() // arrived after the selection and confirmation opened
+        compose.onNodeWithText("Hapus catatan").performClick()
+        compose.waitUntil(5000) { compose.onAllNodesWithText("1 catatan menunggu keputusan").fetchSemanticsNodes().isNotEmpty() }
+        runBlocking {
+            Assert.assertEquals(ReviewStatus.IGNORED, app.database.transactionDao().getById(first)!!.reviewStatus)
+            Assert.assertEquals(ReviewStatus.IGNORED, app.database.transactionDao().getById(second)!!.reviewStatus)
+            Assert.assertEquals(ReviewStatus.NEEDS_REVIEW, app.database.transactionDao().getById(later)!!.reviewStatus)
+            Assert.assertEquals(97000L, app.accountRepository.observeActiveAccounts().first().first().currentEstimatedBalance)
+        }
     }
 
 }

@@ -388,4 +388,35 @@ class NotificationToLedgerIntegrationTest {
         assertEquals(3L, com.luxwallet.app.core.common.CashflowMath.totalExpense(db.transactionDao().getAllOnce()))
     }
 
+    private suspend fun reviewAndFailed(): Pair<Long, Long> {
+        ingestNotification(SourceApp.MYBCA, "Catatan Finansial", "Pengeluaran sebesar IDR 3.00 di kategori Belanja Bulanan.", 10000)
+        val tx = db.transactionDao().getAllOnce().single()
+        db.transactionDao().update(tx.copy(reviewStatus = ReviewStatus.NEEDS_REVIEW))
+        ingestNotification(SourceApp.MYBCA, "Pesan bank", "Pembayaran IDR 5.00 dengan format baru", 20000)
+        return tx.id to db.notificationObservationDao().getByStatus(ParseStatus.FAILED).single().id
+    }
+    @Test fun bulkReviewDeleteHandlesMixedRowsOnceAndSkipsConfirmedTransactions() = runBlocking {
+        val (tx, obs) = reviewAndFailed()
+        val confirmed = transactionRepository.insertManual(TransactionType.EXPENSE, com.luxwallet.app.core.model.TransactionDirection.OUT, 7, bcaAccountId)
+        assertEquals(2, transactionRepository.dismissReview(setOf(tx, confirmed), setOf(obs)))
+        assertEquals(0, transactionRepository.dismissReview(setOf(tx, confirmed), setOf(obs)))
+        assertEquals(14999993L, accountRepository.getById(bcaAccountId)!!.currentEstimatedBalance)
+        assertEquals(ReviewStatus.IGNORED, db.transactionDao().getById(tx)!!.reviewStatus)
+        assertEquals(ReviewStatus.CONFIRMED, db.transactionDao().getById(confirmed)!!.reviewStatus)
+        assertEquals(ParseStatus.IGNORED, db.notificationObservationDao().getById(obs)!!.parseStatus)
+        assertEquals(2, db.transactionDao().getAllOnce().size)
+        assertEquals(1, db.ledgerEntryDao().getAllOnce().size)
+    }
+    @Test fun bulkReviewFailureRollsBackEveryBalanceAndStatusChange() = runBlocking {
+        val (tx, obs) = reviewAndFailed()
+        db.openHelper.writableDatabase.execSQL("CREATE TRIGGER reject_bulk BEFORE UPDATE OF parseStatus ON notification_observations WHEN NEW.parseStatus = 'IGNORED' BEGIN SELECT RAISE(ABORT, 'test failure'); END")
+        var failed = false
+        try { transactionRepository.dismissReview(setOf(tx), setOf(obs)) } catch (_: Exception) { failed = true }
+        assertTrue(failed)
+        assertEquals(ReviewStatus.NEEDS_REVIEW, db.transactionDao().getById(tx)!!.reviewStatus)
+        assertEquals(ParseStatus.FAILED, db.notificationObservationDao().getById(obs)!!.parseStatus)
+        assertEquals(14999997L, accountRepository.getById(bcaAccountId)!!.currentEstimatedBalance)
+        assertEquals(1, db.ledgerEntryDao().getAllOnce().size)
+    }
+
 }

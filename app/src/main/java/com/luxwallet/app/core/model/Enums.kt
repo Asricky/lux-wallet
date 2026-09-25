@@ -2,7 +2,7 @@ package com.luxwallet.app.core.model
 
 import kotlinx.serialization.Serializable
 
-/** Financial apps Lux Wallet is allowed to read notifications from. Nothing else is ever processed. */
+/** Financial apps Lumi is allowed to read notifications from. Nothing else is ever processed. */
 @Serializable
 enum class SourceApp {
     MYBCA, SEABANK, SHOPEEPAY, GOPAY

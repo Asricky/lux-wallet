@@ -1,13 +1,13 @@
-# Lux Wallet — Product Requirements Document
+# Lumi — Product Requirements Document
 
-Versi produk: **v5 / 1.0.5** · Revisi: **24 September 2026**
+Versi produk: **v6 / 1.0.6** · Revisi: **25 September 2026**
 Platform: Android 10+ · Bahasa: Indonesia · Pemilik repo: Asricky
 
 Dokumen ini menjadi spesifikasi produk aktif. Arah tampilan dan komponen ada di [DESIGN.md](DESIGN.md), petunjuk instalasi di [README.md](README.md).
 
 ## 1. Tujuan dan batas produk
 
-Lux Wallet membantu pengguna mengetahui posisi uang, mencatat aktivitas bank/e-wallet dari notifikasi, dan membagi uang yang tersedia sampai pemasukan berikutnya. Lumi adalah penguin pendamping produk.
+Lumi membantu pengguna mengetahui posisi uang, mencatat aktivitas bank/e-wallet dari notifikasi, dan membagi uang yang tersedia sampai pemasukan berikutnya. Lumi adalah penguin pendamping produk.
 
 Fungsi inti berjalan offline dan data finansial disimpan di perangkat. Aplikasi tidak meminta kredensial bank, melakukan pembayaran, memindahkan dana, membeli investasi, atau menganggap saldo estimasi sebagai saldo bank yang terverifikasi.
 
@@ -36,7 +36,7 @@ Rekening dan profil disimpan pada langkah terakhir dalam transaksi database. Pen
 
 ## 4. Sumber, parsing, dan bukti
 
-Sumber bawaan: BCA mobile/myBCA, SeaBank, ShopeePay, GoPay. Hanya paket yang diizinkan diproses. Paket tambahan memerlukan pemetaan eksplisit dari diagnostik. Notifikasi Lux Wallet sendiri tidak menjadi sumber keuangan.
+Sumber bawaan: BCA mobile/myBCA, SeaBank, ShopeePay, GoPay. Hanya paket yang diizinkan diproses. Paket tambahan memerlukan pemetaan eksplisit dari diagnostik. Notifikasi Lumi sendiri tidak menjadi sumber keuangan.
 
 Observation menyimpan sumber, paket, kunci notifikasi Android, waktu kirim/terima, original event time bila ada, isi notifikasi, hash payload, hash isi kanonik, status parser, dan relasi ke transaksi logis.
 
@@ -69,7 +69,7 @@ Tombol mata menyembunyikan nominal pada Beranda, Aset, kalender, dan ringkasan r
 
 ## 7. Beranda
 
-Header memuat Lumi, identitas Lux Wallet, indikator pemantauan kecil yang dapat diketuk, dan pengaturan. Hijau berkedip berarti listener tersambung dan tidak melaporkan kegagalan; merah berarti akses/koneksi perlu diperiksa.
+Header memuat Lumi, identitas Lumi, indikator pemantauan kecil yang dapat diketuk, dan pengaturan. Hijau berkedip berarti listener tersambung dan tidak melaporkan kegagalan; merah berarti akses/koneksi perlu diperiksa.
 
 Konten: kekayaan bersih, pintasan riwayat/rencana/kalkulator/peninjauan, ruang belanja sampai gajian, saran Lumi, transaksi terbaru, sebaran aset. Tidak ada kartu besar terpisah untuk status notifikasi.
 
@@ -180,7 +180,7 @@ Pengamatan data UI mengikuti perubahan transaksi dan tanggal lokal. Tidak ada ba
 
 ## 15. Distribusi dan penerimaan
 
-Artefak berada di `app/build/outputs/apk/debug/app-debug-vN.apk`. Jalankan `build-update.ps1` untuk test, lint, build, dan kenaikan nomor hanya setelah build berhasil. Setiap pembaruan wajib memperbarui CHANGELOG; script otomatis memperbarui README dengan link download langsung APK terbaru, versi, checksum, serta catatan perubahan. Kebijakan ini berlaku untuk seluruh rilis berikutnya tanpa menunggu permintaan ulang pemilik. Nama launcher tetap Lux Wallet. Application ID debug dan sertifikat harus tetap sama agar update mempertahankan data.
+Artefak berada di `app/build/outputs/apk/debug/app-debug-vN.apk`. Jalankan `build-update.ps1` untuk test, lint, build, dan kenaikan nomor hanya setelah build berhasil. Setiap pembaruan wajib memperbarui CHANGELOG; script otomatis memperbarui README dengan link download langsung APK terbaru, versi, checksum, serta catatan perubahan. Kebijakan ini berlaku untuk seluruh rilis berikutnya tanpa menunggu permintaan ulang pemilik. Nama launcher tetap Lumi. Application ID debug dan sertifikat harus tetap sama agar update mempertahankan data.
 
 Penerimaan dasar (dipertahankan sejak v3):
 
@@ -245,3 +245,14 @@ Ketentuan ini memperinci dan menggantikan perilaku v3/v4 yang bertentangan.
 10. Pengujian meliputi alur simpan/abaikan kembali Beranda, review, kategori, arsip/pulihkan, saldo/ledger, migrasi, rekomendasi, periode tren, compact cashflow, launcher, dan listener tanpa Activity. Rilis wajib melalui build-update.ps1, README/CHANGELOG/PRD/DESIGN diperbarui, APK bernomor naik, tautan langsung terbaru dan SHA-256 selalu tersedia tanpa permintaan ulang.
 
 Validasi rilis v5: 137 test lulus; testDebugUnitTest, lintDebug, assembleDebug berhasil. Lint: 0 error, 13 warning nonblocking. Rendering native termasuk sembilan ikon dan layar 320/393 dp; perangkat fisik belum diuji.
+
+
+## Pembaruan v6 · Lumi
+
+Nama publik aplikasi dan repositori menjadi Lumi/lumi. Judul layar, akses biometrik, label launcher, channel notifikasi dan nama ekspor mengikuti nama Lumi. Application ID, namespace internal, nama database, kunci preferensi/keystore, ID channel, dan alias launcher lama dipertahankan untuk kompatibilitas update; bukan nama yang ditampilkan kepada pengguna. Tidak ada migrasi destruktif atau penggantian paket instalasi.
+
+Tinjauan menampilkan pesan asli dari observation yang terkait, termasuk notifikasi gagal parse. Isi panjang dapat diperluas; data yang sudah dibersihkan retensi menggunakan catatan/merchant atau keterangan pesan tidak tersedia. Mode hide menyamarkan seluruh digit pada pesan agar nominal dan nomor rekening tidak bocor.
+
+Setiap kartu memiliki checkbox. Pilih semua dan Hapus terpilih tetap terlihat pada toolbar di atas daftar. Konfirmasi menghapus hanya snapshot pilihan saat tombol ditekan; notifikasi baru yang datang sesudahnya tidak ikut dihapus. Penghapusan berarti diabaikan dari tinjauan, dengan pembalikan ledger satu kali untuk transaksi yang sudah dihitung. Recheck status terbaru mencegah catatan yang sudah dikonfirmasi di tempat lain ikut dihapus. Seluruh batch dijalankan dalam satu transaksi database: semua berhasil atau seluruh perubahan dibatalkan. Riwayat dan bukti tetap ada.
+
+README menjadi halaman ringkas berisi identitas Lumi, link APK utama, catatan versi, fitur dan cara mulai. Detail operasional berada di docs/USER_GUIDE.md. update-readme.ps1 menjaga struktur ringkas dan tautan repo lumi setiap rilis.

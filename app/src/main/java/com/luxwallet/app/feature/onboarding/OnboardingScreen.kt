@@ -47,7 +47,7 @@ import com.luxwallet.app.core.ui.luxViewModel
             0 -> {
                 Lumi(modifier = Modifier.size(140.dp).align(Alignment.CenterHorizontally))
                 Text("Kenali uangmu bersama Lumi", style = MaterialTheme.typography.headlineMedium)
-                Text("Lux Wallet mencatat transaksi dari notifikasi dan membantumu merencanakan uang sampai gajian.")
+                Text("Lumi mencatat transaksi dari notifikasi dan membantumu merencanakan uang sampai gajian.")
                 Text("Data disimpan di perangkat. Tidak meminta login bank atau melakukan pembayaran. Kamu tetap bisa mencatat manual.")
                 OutlinedTextField(profileName, { profileName = it.take(40) }, Modifier.fillMaxWidth(), label = { Text("Nama panggilan (opsional)") }, singleLine = true)
                 Button({ step++ }, Modifier.fillMaxWidth()) { Text("Mulai") }

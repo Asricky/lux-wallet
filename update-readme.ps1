@@ -18,24 +18,31 @@ if (-not $ApkPath) { $ApkPath = Join-Path $PSScriptRoot "app/build/outputs/apk/d
 if (-not (Test-Path -LiteralPath $ApkPath -PathType Leaf)) { throw 'APK belum tersedia. README tidak diubah.' }
 $hash = (Get-FileHash -LiteralPath $ApkPath -Algorithm SHA256).Hash
 $releaseNotes = $notes.Groups['notes'].Value.Trim()
-$url = "https://github.com/Asricky/lux-wallet/raw/refs/heads/main/app/build/outputs/apk/debug/app-debug-v$Version.apk"
+$url = "https://github.com/Asricky/lumi/raw/refs/heads/main/app/build/outputs/apk/debug/app-debug-v$Version.apk"
 $block = @"
 <!-- LATEST_RELEASE_START -->
-## Download APK terbaru
+## Download aplikasi
 
-[**Download app-debug-v$Version.apk**]($url)
+[**Download Lumi - app-debug-v$Version.apk**]($url)
 
-Versi terbaru: **v$Version (1.0.$Version)**. Android 10 atau lebih baru.
+**v$Version / 1.0.$Version** &nbsp; | &nbsp; Android 10+ &nbsp; | &nbsp; [Semua versi](app/build/outputs/apk/debug)
 
-Lokasi file: ``lux-wallet\app\build\outputs\apk\debug\app-debug-v$Version.apk``.
-
-Semua versi sebelumnya tersedia di [folder APK debug](app/build/outputs/apk/debug). Nama launcher tetap **Lux Wallet**.
-
-SHA-256: ``$hash``
-
-### Pembaruan v$Version
+### Yang baru
 
 $releaseNotes
+
+<details>
+<summary>Lokasi file &amp; verifikasi unduhan</summary>
+
+File: ``app/build/outputs/apk/debug/app-debug-v$Version.apk``
+
+SHA-256:
+
+``````text
+$hash
+``````
+
+</details>
 <!-- LATEST_RELEASE_END -->
 "@
 $updated = [regex]::Replace($readme, $pattern, [System.Text.RegularExpressions.MatchEvaluator]{ param($match) $block })

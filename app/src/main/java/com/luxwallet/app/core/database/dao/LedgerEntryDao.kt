@@ -20,6 +20,9 @@ interface LedgerEntryDao {
     @Query("SELECT * FROM ledger_entries WHERE accountId = :accountId ORDER BY createdAt DESC")
     fun observeForAccount(accountId: Long): Flow<List<LedgerEntryEntity>>
 
+    @Query("SELECT * FROM ledger_entries WHERE transactionId = :transactionId")
+    suspend fun getForTransaction(transactionId: Long): List<LedgerEntryEntity>
+
     @Query("SELECT * FROM ledger_entries")
     suspend fun getAllOnce(): List<LedgerEntryEntity>
 

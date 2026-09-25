@@ -46,7 +46,7 @@ object BiometricAuthManager {
 
         val prompt = BiometricPrompt(activity, executor, callback)
         val promptInfo = BiometricPrompt.PromptInfo.Builder()
-            .setTitle("Buka Lux Wallet")
+            .setTitle("Buka Lumi")
             .setAllowedAuthenticators(AUTH_FLAGS)
             .build()
         prompt.authenticate(promptInfo)

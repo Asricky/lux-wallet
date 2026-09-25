@@ -140,10 +140,29 @@ class TransactionRepository(
         accountDao.reconcileBalance(accountId, target, System.currentTimeMillis())
     }
 
+    /** Snapshot selection, fresh status checks and one transaction prevent partial bulk deletion. */
+    suspend fun dismissReview(transactionIds: Set<Long>, observationIds: Set<Long>): Int = database.withTransaction {
+        var count = 0
+        for (id in transactionIds) {
+            if (transactionDao.getById(id)?.reviewStatus == ReviewStatus.NEEDS_REVIEW) {
+                markIgnored(id)
+                count++
+            }
+        }
+        for (id in observationIds) {
+            val item = observationDao.getById(id) ?: continue
+            if (item.parseStatus == ParseStatus.FAILED) {
+                observationDao.update(item.copy(parseStatus = ParseStatus.IGNORED))
+                count++
+            }
+        }
+        count
+    }
+
     suspend fun markIgnored(id: Long) = database.withTransaction {
         val tx = transactionDao.getById(id) ?: return@withTransaction
         if (tx.reviewStatus == ReviewStatus.IGNORED) return@withTransaction
-        ledgerEntryDao.getAllOnce().filter { it.transactionId == id }.forEach {
+        ledgerEntryDao.getForTransaction(id).forEach {
             accountDao.applyBalanceDelta(it.accountId, -it.deltaAmount)
         }
         ledgerEntryDao.deleteForTransaction(id)

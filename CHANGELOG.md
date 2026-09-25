@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.6 — 2026-09-25
+
+- Nama aplikasi, launcher, notifikasi, dan ekspor menjadi **Lumi**; data dan kompatibilitas pembaruan tetap dijaga.
+- Pesan notifikasi langsung terlihat pada tinjauan, termasuk format yang belum dikenali. Pesan panjang bisa diperluas; mode privasi menyamarkan digit.
+- Pilih beberapa catatan atau **Pilih semua**, lalu **Hapus terpilih** dengan satu konfirmasi. Penghapusan atomik menjaga saldo dan histori.
+- README baru lebih ringkas, dengan tombol unduh utama, catatan versi, dan panduan terpisah. Repositori memakai nama **Asricky/lumi**.
+- Validasi: 141 pengujian lulus; lint tanpa error (13 peringatan). APK tetap memakai identitas dan sertifikat pembaruan yang sama. Belum diuji pada HP fisik.
+
+
 ## 1.0.5 — 2026-09-24
 
 - Sembilan cover dan ikon Lumi dari Lumi-app-cover.png, mengikuti transaksi aktual, budget, dan pencapaian; alias launcher lama tetap tersedia saat upgrade.

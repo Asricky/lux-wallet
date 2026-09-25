@@ -40,7 +40,7 @@ class AccountRepository(private val accountDao: AccountDao) {
     suspend fun setIncludeInNetWorth(id: Long, include: Boolean) = accountDao.setIncludeInNetWorth(id, include)
     suspend fun update(account: AccountEntity) = accountDao.update(account)
 
-    /** The user-owned account Lux Wallet should attribute a notification from [provider] to, if the user set one up. */
+    /** The user-owned account Lumi should attribute a notification from [provider] to, if the user set one up. */
     suspend fun findUserOwnedAccount(provider: AccountProvider): AccountEntity? =
         accountDao.findUserOwnedByProvider(provider)
 
