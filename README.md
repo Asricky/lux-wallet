@@ -15,27 +15,28 @@
 <!-- LATEST_RELEASE_START -->
 ## Download aplikasi
 
-[**Download Lumi - app-debug-v6.apk**](https://github.com/Asricky/lumi/raw/refs/heads/main/app/build/outputs/apk/debug/app-debug-v6.apk)
+[**Download Lumi - app-debug-v7.apk**](https://github.com/Asricky/lumi/raw/refs/heads/main/app/build/outputs/apk/debug/app-debug-v7.apk)
 
-**v6 / 1.0.6** &nbsp; | &nbsp; Android 10+ &nbsp; | &nbsp; [Semua versi](app/build/outputs/apk/debug)
+**v7 / 1.0.7** &nbsp; | &nbsp; Android 10+ &nbsp; | &nbsp; [Semua versi](app/build/outputs/apk/debug)
 
 ### Yang baru
 
-- Nama aplikasi, launcher, notifikasi, dan ekspor menjadi **Lumi**; data dan kompatibilitas pembaruan tetap dijaga.
-- Pesan notifikasi langsung terlihat pada tinjauan, termasuk format yang belum dikenali. Pesan panjang bisa diperluas; mode privasi menyamarkan digit.
-- Pilih beberapa catatan atau **Pilih semua**, lalu **Hapus terpilih** dengan satu konfirmasi. Penghapusan atomik menjaga saldo dan histori.
-- README baru lebih ringkas, dengan tombol unduh utama, catatan versi, dan panduan terpisah. Repositori memakai nama **Asricky/lumi**.
-- Validasi: 141 pengujian lulus; lint tanpa error (13 peringatan). APK tetap memakai identitas dan sertifikat pembaruan yang sama. Belum diuji pada HP fisik.
+- Notifikasi transaksi, budget, dan pengingat menampilkan logo Lumi berwarna, aksen teal, serta judul yang jelas. Privasi layar kunci tetap dijaga.
+- Saran belanja sementara tersedia di Beranda, Rencana, dan Saran Lumi saat rencana belum ada atau berakhir. Perhitungan memakai saldo rekening tercatat, menahan cadangan, dan tidak menambahkan perkiraan gaji.
+- Menu **Laporan bulanan** di Lainnya dan Kalender: preview PDF, perbesar halaman, navigasi halaman, dan simpan file melalui pemilih lokasi Android.
+- PDF A4 berisi ringkasan masuk/keluar, kategori, kalender, evaluasi budget, rekomendasi bulan berikutnya, dan daftar transaksi. Lumi memberi teguran berdasarkan pelampauan budget; data belum ditinjau ditandai sementara.
+- Preview dan unduhan memakai snapshot PDF yang sama. Nominal disamarkan secara default dan bisa disertakan secara eksplisit.
+- Validasi: 151 pengujian lulus; lint 0 error, 14 peringatan. Tata letak A4 dan navigasi diuji secara otomatis; preview PDF serta pemilih lokasi simpan belum diverifikasi pada HP fisik.
 
 <details>
 <summary>Lokasi file &amp; verifikasi unduhan</summary>
 
-File: `app/build/outputs/apk/debug/app-debug-v6.apk`
+File: `app/build/outputs/apk/debug/app-debug-v7.apk`
 
 SHA-256:
 
 ```text
-0AF4E226A4751A233FC895B6E8F842AC062F0D0CE60F8863D8CE53D717BC9F02
+6AC4D3EF9C52AE03A3F21409E2CD8ECC1DF166EF1B6F81C8E2A096C8CE3F0081
 ```
 
 </details>
@@ -47,8 +48,9 @@ SHA-256:
 | --- | --- |
 | **Catatan otomatis** | Membaca notifikasi BCA mobile/myBCA, SeaBank, ShopeePay, dan GoPay, dengan pemeriksaan duplikat. |
 | **Tinjauan praktis** | Baca pesan langsung, pilih beberapa catatan atau semuanya, lalu hapus sekaligus dengan satu konfirmasi. |
+| **Laporan bulanan PDF** | Preview laporan berdesain, evaluasi Lumi, rekomendasi bulan berikutnya, lalu download ke lokasi pilihanmu. |
 | **Kalender keuangan** | Lihat pemasukan, pengeluaran, selisih harian, dan tren pengeluaran per bulan. |
-| **Rencana sampai gajian** | Pisahkan tagihan, transportasi, tabungan, investasi, dan belanja harian. |
+| **Rencana sampai gajian** | Pisahkan kebutuhan wajib dan belanja; saran sementara tetap tersedia saat rencana belum diperbarui. |
 | **Aset & kalkulator** | Koreksi saldo, kelola aset, arsipkan rekening, dan simulasikan rencana uang. |
 | **Temani hari bersama Lumi** | Sembilan ekspresi mengikuti kondisi keuangan, dengan tema terang/gelap dan pilihan privasi nominal. |
 
@@ -60,6 +62,12 @@ SHA-256:
 4. Pastikan notifikasi transaksi aplikasi bank aktif. Tinjau catatan yang belum dikenali sebelum menggunakannya sebagai acuan.
 
 **Sudah memakai versi sebelumnya?** Pasang sebagai pembaruan tanpa uninstall. Nama aplikasi menjadi **Lumi**, dengan identitas instalasi dan sertifikat yang tetap sama agar data tersimpan.
+
+## Buat laporan bulanan
+
+Buka **Lainnya → Laporan bulanan** atau **Kalender → Laporan bulanan & PDF**, pilih bulan, lalu **Buat preview PDF**. Gunakan pengatur perbesaran dan tombol halaman untuk membaca. Tekan **Simpan / download PDF** dan pilih folder, misalnya Download.
+
+Nominal disamarkan secara default. Centang **Sertakan nominal dalam PDF** bila ingin laporan lengkap. Preview dan file unduhan sama; bulan berjalan ditandai sementara. Laporan mencakup catatan yang tersimpan di Lumi, bukan rekening koran bank.
 
 ## Privasi dan kendali
 

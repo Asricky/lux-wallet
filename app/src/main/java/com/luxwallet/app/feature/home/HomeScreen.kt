@@ -83,10 +83,11 @@ import kotlinx.coroutines.launch
                         Text("Ruang belanja hari ini", Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
                         IconButton({ showInfo = true }) { Icon(Icons.Outlined.Info, "Cara menghitung ruang belanja") }
                     }
-                    if (status == null || status.expired) {
+                    if (status == null || planState.adaptive == null) {
                         Lumi(mood, Modifier.size(64.dp))
                         Text(if (status == null) "Konfirmasi saldo yang tersedia" else "Waktunya memperbarui rencana", style = MaterialTheme.typography.titleLarge)
                         Text("Atur kebutuhan sampai pemasukan tanggal 25 atau 1. Uang yang belum diterima belum bisa dibelanjakan.")
+                        planState.interim?.let { InterimBudgetCard(it, hidden) }
                     } else {
                         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                             Text(money(status.remainingToday.coerceAtLeast(0)), Modifier.weight(1f), style = MaterialTheme.typography.headlineMedium)

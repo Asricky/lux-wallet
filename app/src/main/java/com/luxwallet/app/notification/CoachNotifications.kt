@@ -41,9 +41,9 @@ object CoachNotifications {
         val intent = Intent(context, MainActivity::class.java).putExtra("open_coach", true)
             .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
         val pending = PendingIntent.getActivity(context, ID, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-        val public = NotificationCompat.Builder(context, CHANNEL).setSmallIcon(R.drawable.ic_notification_lumi)
+        val public = LumiNotificationBrand.builder(context, CHANNEL)
             .setContentTitle("Lumi").setContentText("Ada saran untuk rencana uangmu.").build()
-        val notification = NotificationCompat.Builder(context, CHANNEL).setSmallIcon(R.drawable.ic_notification_lumi)
+        val notification = LumiNotificationBrand.builder(context, CHANNEL)
             .setContentTitle("Lumi · ${advice.title}").setContentText(advice.message)
             .setStyle(NotificationCompat.BigTextStyle().bigText(advice.message))
             .setContentIntent(pending).setAutoCancel(true).setOnlyAlertOnce(true)
@@ -66,7 +66,9 @@ class CoachWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
             val status = plans.maxByOrNull { it.capturedAt }?.let {
                 PaydayMath.status(it, app.transactionRepository.observeAll().first(), transportIds, billIds, now.toLocalDate())
             }
-            if (CoachNotifications.send(app, MoneyCoach.advise(status, now.toLocalDate()))) app.preferences.setCoachLastDate(now.toLocalDate().toString())
+            val advice = if (status == null || status.expired) CoachAdvice("Cek batas belanja sementara",
+                "Rencana belum diperbarui. Lumi menghitung saran harian dari saldo rekening tercatat setelah cadangan. Buka Saran Lumi, lalu konfirmasi saldo dan jadwal pemasukan.", "Perbarui rencana") else MoneyCoach.advise(status, now.toLocalDate())
+            if (CoachNotifications.send(app, advice)) app.preferences.setCoachLastDate(now.toLocalDate().toString())
             Result.success()
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e

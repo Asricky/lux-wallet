@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
         item { Text("Rencana & aktivitas", style = MaterialTheme.typography.labelLarge) }
         item { MenuRow("Rencana sampai gajian", "Alokasi saldo sampai tanggal 25 atau 1", Icons.Outlined.EventAvailable) { onNavigate(LuxDestinations.PLANNER) } }
         item { MenuRow("Riwayat transaksi", "Semua pemasukan dan pengeluaran", Icons.Outlined.ReceiptLong) { onNavigate(LuxDestinations.TRANSACTIONS) } }
+        item { MenuRow("Laporan bulanan", "Preview dan download PDF bersama evaluasi Lumi", Icons.Outlined.PictureAsPdf) { onNavigate(LuxDestinations.REPORTS) } }
         item { MenuRow("Arus kas", "Rincian per bulan dan kategori", Icons.Outlined.PieChart) { onNavigate(LuxDestinations.CASHFLOW) } }
         item { MenuRow("Anggaran & target", "Transportasi, bisnis, dan investasi", Icons.Outlined.Savings) { onNavigate(LuxDestinations.BUDGETS_GOALS) } }
         item { MenuRow("Kalkulator", "Hitung uang dan simulasi investasi", Icons.Outlined.Calculate) { onNavigate(LuxDestinations.CALCULATOR) } }

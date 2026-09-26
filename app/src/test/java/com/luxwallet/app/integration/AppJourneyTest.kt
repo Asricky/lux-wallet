@@ -45,6 +45,34 @@ class AppJourneyTest {
             LuxWalletTheme { LuxAppScaffold(nav) }
         }
     }
+    @Test
+    @org.robolectric.annotation.GraphicsMode(org.robolectric.annotation.GraphicsMode.Mode.NATIVE)
+    @Config(qualifiers="w393dp-h851dp-mdpi")
+    fun reportsMenuMonthPrivacyAndBackRemainUsable() {
+        lateinit var androidView: android.view.View
+        compose.setContent {
+            androidView = androidx.compose.ui.platform.LocalView.current
+            nav = rememberNavController()
+            LuxWalletTheme { LuxAppScaffold(nav) }
+        }
+        compose.onNodeWithText("Lainnya").performClick()
+        compose.onNodeWithText("Laporan bulanan").performClick()
+        compose.onNodeWithText("Buat preview PDF").assertIsDisplayed()
+        compose.onNode(isToggleable()).assertIsOff()
+        compose.onNode(isToggleable()).performClick().assertIsOn()
+        compose.onNodeWithContentDescription("Pilih Bulan laporan").performClick()
+        val previous=java.time.YearMonth.now().minusMonths(1).format(java.time.format.DateTimeFormatter.ofPattern("MMMM yyyy",java.util.Locale("id","ID")))
+        compose.onNodeWithText(previous).performClick()
+        compose.onNodeWithText(previous).assertIsDisplayed()
+        java.io.File("build/reports/ui").mkdirs()
+        val bitmap=android.graphics.Bitmap.createBitmap(androidView.width,androidView.height,android.graphics.Bitmap.Config.ARGB_8888)
+        compose.runOnIdle { androidView.draw(android.graphics.Canvas(bitmap)) }
+        java.io.File("build/reports/ui/reports-v7.png").outputStream().use { bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG,100,it) }
+        compose.onNodeWithContentDescription("Kembali").performClick()
+        compose.runOnIdle { Assert.assertEquals(LuxDestinations.MORE, nav.currentDestination?.route) }
+        compose.onNodeWithText("Beranda").performClick()
+        compose.onNodeWithText("Hi there 👋").assertIsDisplayed()
+    }
     @Test fun actualManualEntryCanReturnEditSaveAndNavigateAgain() {
         launch()
         compose.onNodeWithContentDescription("Catat transaksi").performClick()

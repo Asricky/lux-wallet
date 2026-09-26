@@ -132,3 +132,21 @@ Arsip validasi v5: **137 pengujian unit/integrasi/UI lulus**; build APK berhasil
 Pemrosesan inti berjalan lokal. Tidak ada pengiriman isi notifikasi ke server. Database Room termasuk riwayat rencana kalender berada di penyimpanan privat aplikasi; cadangan file dienkripsi menggunakan Android Keystore. Cadangan tersebut terikat kunci instalasi/perangkat, sehingga **bukan** cadangan portabel untuk reinstall atau pindah perangkat. Ekspor CSV tersedia untuk arsip transaksi.
 
 Notifikasi yang tidak dikenal dipertahankan untuk ditinjau. Retensi mengosongkan isi mentah notifikasi yang sudah diproses; hash dan metadata identitas tetap disimpan untuk mencegah kiriman ulang dihitung kembali. Proteksi tangkapan layar dan kunci biometrik dapat diaktifkan dari Pengaturan.
+
+
+## Laporan bulanan dan PDF
+
+1. Buka Lainnya → Laporan bulanan, atau tombol laporan di Kalender.
+2. Pilih bulan. Default bulan berjalan; laporan berjalan hanya sampai waktu dibuat.
+3. Centang Sertakan nominal dalam PDF jika ingin angka lengkap; default disamarkan. Nama merchant/kategori tetap tercantum.
+4. Buat preview PDF. Gunakan tombol halaman dan zoom untuk memeriksa isinya.
+5. Simpan / download PDF, lalu pilih folder pada pemilih file Android. Membatalkan pemilih file tidak mengubah laporan atau transaksi.
+6. Jika transaksi berubah, tekan Perbarui laporan. Ekspor memakai snapshot yang dipreview.
+
+Arus kas tidak mencakup transfer sendiri, top-up e-wallet, koreksi saldo, dan catatan diabaikan. Selisih laporan bukan saldo rekening. Lumi menegur pelampauan budget hanya pada hari dengan rencana. Catatan perlu ditinjau membuat evaluasi sementara; notifikasi yang tidak tertangkap perlu dicatat manual. Tidak ada pengiriman laporan otomatis ke pihak lain.
+
+## Saran ketika rencana belum diperbarui
+
+Beranda, Rencana, dan Saran Lumi menampilkan rekomendasi sementara bila ada rekening aktif. Saldo rekening tercatat dibagi sampai jadwal 25/1 berikutnya setelah menyisihkan cadangan terbesar dari profil/rencana lama dan transportasi. Cadangan ditahan penuh sampai dikonfirmasi, sehingga rekomendasi dapat lebih kecil daripada dana yang sebenarnya tersedia. Belanja hari ini mengurangi sisa rekomendasi. Perbarui saldo dan rencana jika pemasukan terlambat atau tagihan sudah dibayar. Saran tidak mengubah rencana tersimpan.
+
+Logo Lumi berwarna kini tampil pada notifikasi transaksi, budget, dan pengingat. Ikon status bar tetap monokrom sesuai Android; tampilan besar/kecil mengikuti perangkat. Contoh notifikasi tersedia di Saran Lumi → Pengingat & ikon Lumi.

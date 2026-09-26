@@ -48,7 +48,9 @@ import java.util.Locale
     fun summaryMoney(value: Long) = if (hidden) "********" else (if (value < 0) "−Rp" else "Rp") + com.luxwallet.app.core.common.compactCashflow(value).removePrefix("+").removePrefix("−")
     fun changeMonth(value: YearMonth) { monthText = value.toString(); selectedDay = value.atDay(1).toEpochDay() }
     LazyColumn(contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 96.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        item { Text("Kalender keuangan", style = MaterialTheme.typography.headlineSmall) }
+        item { Text("Kalender keuangan", style = MaterialTheme.typography.headlineSmall)
+            TextButton({ onNavigate(LuxDestinations.REPORTS) }) { Text("Laporan bulanan & PDF") }
+        }
         item { Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton({ changeMonth(month.minusMonths(1)) }) { Icon(Icons.AutoMirrored.Outlined.KeyboardArrowLeft, "Bulan sebelumnya") }
             Box(Modifier.weight(1f)) {

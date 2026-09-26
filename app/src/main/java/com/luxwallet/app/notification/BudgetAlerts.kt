@@ -29,10 +29,10 @@ object BudgetAlerts {
         val title = when(level) { 120 -> "Yuk, susun ulang belanja hari ini"; 100 -> "Budget hari ini sudah terlewati"; else -> "Budget hari ini mulai menipis" }
         val intent = Intent(app, MainActivity::class.java).putExtra("open_coach", true)
         val pending = PendingIntent.getActivity(app, 3102, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
-        val public = NotificationCompat.Builder(app, TransactionNotifications.CHANNEL).setSmallIcon(R.drawable.ic_notification_lumi)
+        val public = LumiNotificationBrand.builder(app, TransactionNotifications.CHANNEL)
             .setContentTitle("Lumi").setContentText("Periksa rencana harianmu.").build()
-        val notification = NotificationCompat.Builder(app, TransactionNotifications.CHANNEL).setSmallIcon(R.drawable.ic_notification_lumi)
-            .setContentTitle(title).setContentText("Dahulukan kebutuhan utama. Buka rencana untuk melihat pilihan alokasi.")
+        val notification = LumiNotificationBrand.builder(app, TransactionNotifications.CHANNEL)
+            .setContentTitle("Lumi · $title").setContentText("Dahulukan kebutuhan utama. Buka rencana untuk melihat pilihan alokasi.")
             .setContentIntent(pending).setAutoCancel(true).setOnlyAlertOnce(true)
             .setVisibility(NotificationCompat.VISIBILITY_PRIVATE).setPublicVersion(public).build()
         try {

@@ -32,7 +32,7 @@ object TransactionNotifications {
     const val WORK = "transaction_confirmations"
     fun createChannel(context: Context) {
         context.getSystemService(NotificationManager::class.java).createNotificationChannel(
-            NotificationChannel(CHANNEL, "Lumi Transactions", NotificationManager.IMPORTANCE_DEFAULT).apply {
+            NotificationChannel(CHANNEL, "Transaksi & budget Lumi", NotificationManager.IMPORTANCE_DEFAULT).apply {
                 description = "Konfirmasi pencatatan transaksi dan peringatan budget"
                 lockscreenVisibility = Notification.VISIBILITY_PRIVATE
             })
@@ -73,10 +73,10 @@ object TransactionNotifications {
             .setData(android.net.Uri.parse("luxwallet://transaction/${tx.id}"))
             .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
         val pending = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-        val public = NotificationCompat.Builder(context, CHANNEL).setSmallIcon(R.drawable.ic_notification_lumi)
+        val public = LumiNotificationBrand.builder(context, CHANNEL)
             .setContentTitle("Lumi").setContentText("Ada pembaruan transaksi.").build()
-        val notification = NotificationCompat.Builder(context, CHANNEL).setSmallIcon(R.drawable.ic_notification_lumi)
-            .setContentTitle(title(tx)).setContentText(text).setStyle(NotificationCompat.BigTextStyle().bigText(text))
+        val notification = LumiNotificationBrand.builder(context, CHANNEL)
+            .setContentTitle("Lumi · ${title(tx)}").setContentText(text).setStyle(NotificationCompat.BigTextStyle().bigText(text))
             .setContentIntent(pending).setAutoCancel(true).setOnlyAlertOnce(true)
             .setVisibility(NotificationCompat.VISIBILITY_PRIVATE).setPublicVersion(public).build()
         return try { NotificationManagerCompat.from(context).notify("transaction:${tx.id}", 1, notification); true }

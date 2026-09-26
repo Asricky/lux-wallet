@@ -33,6 +33,7 @@ fun NavHostController.openScreen(route: String) {
 }
 
 private fun screenTitle(route: String?) = when (route) {
+    LuxDestinations.REPORTS -> "Laporan bulanan"
     LuxDestinations.ALERT_SETTINGS -> "Notifikasi Lumi"
     LuxDestinations.QUICK_ADD -> "Catat transaksi"
     LuxDestinations.TRANSACTION_DETAIL -> "Detail transaksi"

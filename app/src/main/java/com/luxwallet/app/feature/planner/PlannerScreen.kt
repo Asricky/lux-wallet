@@ -64,6 +64,7 @@ val planDateFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy
             Text("Cukup sampai pemasukan berikutnya", style = MaterialTheme.typography.headlineSmall)
             Text("Atur uang yang sudah ada. Perkiraan gaji tidak menambah saldo atau ruang belanja.", style = MaterialTheme.typography.bodyMedium)
         }
+        state.interim?.let { budget -> item { InterimBudgetCard(budget, hidden) } }
         if (!state.loaded) item { LinearProgressIndicator(Modifier.fillMaxWidth()) }
         else if (!editing) {
             val status = state.status

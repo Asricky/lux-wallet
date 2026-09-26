@@ -84,6 +84,7 @@ import kotlinx.coroutines.launch
                 Text(if (mood == LumiMood.CURIOUS) "Tinjau catatan" else "Tinjau rencana")
             }
         } } }
+        state.interim?.let { budget -> item { InterimBudgetCard(budget, hidden) } }
         state.adaptive?.let { budget ->
             item { FinancialMetric("${budget.daysRemaining} hari menuju pemasukan berikutnya", "Budget tersisa ${money(budget.remaining)}", Modifier.fillMaxWidth()) }
             item { FinancialMetric("Cadangan penyangga", money(budget.bufferRemaining), Modifier.fillMaxWidth()) }

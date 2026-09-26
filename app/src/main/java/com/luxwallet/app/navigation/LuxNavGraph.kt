@@ -28,6 +28,7 @@ fun LuxNavGraph(navController: NavHostController, startDestination: String = Lux
         exitTransition = { androidx.compose.animation.ExitTransition.None },
         popEnterTransition = { androidx.compose.animation.EnterTransition.None },
         popExitTransition = { androidx.compose.animation.ExitTransition.None }) {
+        composable(LuxDestinations.REPORTS) { com.luxwallet.app.feature.reports.ReportsScreen() }
         composable(LuxDestinations.ALERT_SETTINGS) { com.luxwallet.app.feature.settings.AlertSettingsScreen() }
         composable(LuxDestinations.HOME) { HomeScreen(onNavigate = { navController.openScreen(it) }) }
         composable(LuxDestinations.CALENDAR) { com.luxwallet.app.feature.calendar.CalendarScreen(onNavigate = { navController.openScreen(it) }) }

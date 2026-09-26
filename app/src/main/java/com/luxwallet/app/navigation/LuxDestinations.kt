@@ -1,6 +1,7 @@
 package com.luxwallet.app.navigation
 
 object LuxDestinations {
+    const val REPORTS = "reports"
     const val ALERT_SETTINGS = "alert_settings"
     const val CALENDAR = "calendar"
     const val PLANNER = "planner"

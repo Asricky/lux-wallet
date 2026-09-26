@@ -1,6 +1,6 @@
 # Lumi — Panduan desain
 
-Revisi 25 September 2026 · v6. Perhitungan dan perilaku: [PRD.md](PRD.md).
+Revisi 26 September 2026 · v7. Perhitungan dan perilaku: [PRD.md](PRD.md).
 
 ## Arah produk
 
@@ -99,3 +99,13 @@ Setiap update harus menyertakan CHANGELOG dan menjalankan `build-update.ps1`. RE
 Nama produk adalah **Lumi** di seluruh permukaan pengguna. Gambar hero README memakai hasil render ikon launcher asli; jangan menggambar ulang maskot. README memakai satu CTA unduhan utama, fitur ringkas dalam tabel, dan detail checksum yang dapat dibuka. Panduan panjang dipisahkan ke docs/USER_GUIDE.md.
 
 Tinjauan: toolbar jumlah pilihan + Pilih semua/Batal pilih + Hapus terpilih tetap di atas daftar. Kartu menampilkan sumber/nominal, waktu, status, pesan asli empat baris awal (Selengkapnya untuk memperluas), checkbox kanan, dan aksi Tinjau/Hapus. Pilihan memakai warna primaryContainer dan checkbox agar tidak bergantung pada warna saja. Konfirmasi batch satu kali dengan jumlah catatan. Jangan menghilangkan pesan demi kartu yang tampak ringkas; sediakan perluasan. Saat mode hide aktif seluruh digit pesan disamarkan.
+
+
+## v7 · Notifikasi dan laporan
+
+- Notifikasi menggunakan siluet monokrom yang kontras untuk status bar dan maskot berwarna 192 px pada large icon. Judul diawali Lumi, warna aksen teal. Hindari layout custom agar kontrol privasi dan aksesibilitas Android tetap bekerja.
+- Rekomendasi sementara berupa kartu berlabel eksplisit, angka sisa hari ini sebagai hirarki utama, lalu batas/terpakai, sumber saldo, cadangan, serta asumsi. Tidak memakai label “aman” untuk saldo yang belum dikonfirmasi.
+- Laporan A4 595 × 842 pt: margin 40 pt, masthead Lumi, garis teal, kartu ringkasan mint, teks navy, aksen merah untuk pengeluaran/pelampauan, nomor halaman. Ukuran isi 11–12 pt, metadata minimal 9 pt; paragraf dan nama panjang membungkus ke baris berikutnya.
+- Struktur PDF: ringkasan/evaluasi/langkah selanjutnya, rincian kategori dengan bar, kalender arus kas, daftar transaksi. Header dan footer konsisten tiap halaman; konten mengalir otomatis ke halaman baru. Bulan berjalan diberi label sementara.
+- Preview memakai PDF asli, satu halaman agar penggunaan memori terkendali. Tombol Sebelumnya/Berikutnya, indikator halaman, slider zoom 100–250%, dan Simpan/download selalu memakai snapshot yang sama. Form, proses, error, empty report, dan pembatalan pemilih file mempunyai state jelas. Back mengikuti scaffold aplikasi.
+- Nada Lumi: tegas pada perilaku yang terukur dan disertai tindakan praktis. Tidak menghina pengguna; kategori terbesar tidak otomatis disebut berlebihan tanpa budget pembanding.

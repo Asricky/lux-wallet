@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.7 — 2026-09-26
+
+- Notifikasi transaksi, budget, dan pengingat menampilkan logo Lumi berwarna, aksen teal, serta judul yang jelas. Privasi layar kunci tetap dijaga.
+- Saran belanja sementara tersedia di Beranda, Rencana, dan Saran Lumi saat rencana belum ada atau berakhir. Perhitungan memakai saldo rekening tercatat, menahan cadangan, dan tidak menambahkan perkiraan gaji.
+- Menu **Laporan bulanan** di Lainnya dan Kalender: preview PDF, perbesar halaman, navigasi halaman, dan simpan file melalui pemilih lokasi Android.
+- PDF A4 berisi ringkasan masuk/keluar, kategori, kalender, evaluasi budget, rekomendasi bulan berikutnya, dan daftar transaksi. Lumi memberi teguran berdasarkan pelampauan budget; data belum ditinjau ditandai sementara.
+- Preview dan unduhan memakai snapshot PDF yang sama. Nominal disamarkan secara default dan bisa disertakan secara eksplisit.
+- Validasi: 151 pengujian lulus; lint 0 error, 14 peringatan. Tata letak A4 dan navigasi diuji secara otomatis; preview PDF serta pemilih lokasi simpan belum diverifikasi pada HP fisik.
+
 ## 1.0.6 — 2026-09-25
 
 - Nama aplikasi, launcher, notifikasi, dan ekspor menjadi **Lumi**; data dan kompatibilitas pembaruan tetap dijaga.
